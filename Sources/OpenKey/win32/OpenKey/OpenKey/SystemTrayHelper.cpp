@@ -36,6 +36,7 @@ redistribute your new version, it MUST be open source.
 #define POPUP_QUICK_CONVERT 981
 
 #define POPUP_MACRO_TABLE 990
+#define POPUP_APP_PROFILE 991
 
 #define POPUP_CONTROL_PANEL 1000
 #define POPUP_ABOUT_OPENKEY 1010
@@ -68,6 +69,7 @@ map<UINT, LPCTSTR> menuData = {
 	{POPUP_CONVERT_TOOL, _T("Công cụ chuyển mã...")},
 	{POPUP_QUICK_CONVERT, _T("Chuyển mã nhanh")},
 	{POPUP_MACRO_TABLE, _T("Cấu hình gõ tắt...")},
+	{POPUP_APP_PROFILE, _T("Thiết lập theo ứng dụng...")},
 	{POPUP_CONTROL_PANEL, _T("Bảng điều khiển...")},
 	{POPUP_ABOUT_OPENKEY, _T("Giới thiệu OpenKey")},
 	{POPUP_OPENKEY_EXIT, _T("Thoát")},
@@ -118,6 +120,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
 				break;
 			case POPUP_MACRO_TABLE:
 				AppDelegate::getInstance()->onMacroTable();
+				break;
+			case POPUP_APP_PROFILE:
+				AppDelegate::getInstance()->onAppProfile();
 				break;
 			case POPUP_CONVERT_TOOL:
 				AppDelegate::getInstance()->onConvertTool();
@@ -208,6 +213,7 @@ void SystemTrayHelper::createPopupMenu() {
 	AppendMenu(popupMenu, MF_CHECKED, POPUP_USE_MACRO, menuData[POPUP_USE_MACRO]);
 	AppendMenu(popupMenu, MF_SEPARATOR, 0, 0);
 	AppendMenu(popupMenu, MF_UNCHECKED, POPUP_MACRO_TABLE, menuData[POPUP_MACRO_TABLE]);
+	AppendMenu(popupMenu, MF_UNCHECKED, POPUP_APP_PROFILE, menuData[POPUP_APP_PROFILE]);
 	AppendMenu(popupMenu, MF_UNCHECKED, POPUP_CONVERT_TOOL, menuData[POPUP_CONVERT_TOOL]);
 	AppendMenu(popupMenu, MF_UNCHECKED, POPUP_QUICK_CONVERT, menuData[POPUP_QUICK_CONVERT]);
 	AppendMenu(popupMenu, MF_SEPARATOR, 0, 0);

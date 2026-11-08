@@ -81,6 +81,12 @@
     <ClInclude Include="ConvertToolDialog.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="AppProfile.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AppProfileDialog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="MacroDialog.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -132,6 +138,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ConvertToolDialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AppProfile.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AppProfileDialog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="MacroDialog.cpp">

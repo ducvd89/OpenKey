@@ -62,6 +62,7 @@
 #define IDD_DIALOG_TAB_SYSTEM           147
 #define IDD_DIALOG_OLD                  148
 #define IDD_DIALOG_TAB_INFO             149
+#define IDD_DIALOG_APP_PROFILE          150
 #define IDS_STRING_OTHER_LANGUAGES		150
 #define IDC_COMBO1                      1000
 #define IDC_COMBO_INPUT_TYPE            1000
@@ -182,6 +183,13 @@
 #define IDS_STRING_START_CONSONANT      1066
 #define IDS_STRING_END_CONSONANT        1067
 #define IDC_CHECK_OTHER_LANGUAGES       1068
+#define IDC_LIST_APP_PROFILE            1100
+#define IDC_COMBO_APP_EXE               1101
+#define IDC_BUTTON_BROWSE_EXE           1102
+#define IDC_COMBO_APP_MODE              1103
+#define IDC_BUTTON_SAVE_PROFILE         1104
+#define IDC_BUTTON_DELETE_PROFILE       1105
+#define IDC_BUTTON_APP_PROFILE          1106
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -189,9 +197,9 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
-#define _APS_NEXT_RESOURCE_VALUE        149
+#define _APS_NEXT_RESOURCE_VALUE        151
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1052
+#define _APS_NEXT_CONTROL_VALUE         1107
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif

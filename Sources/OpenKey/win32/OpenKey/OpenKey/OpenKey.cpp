@@ -13,6 +13,7 @@ redistribute your new version, it MUST be open source.
 -----------------------------------------------------------*/
 #include "stdafx.h"
 #include "AppDelegate.h"
+#include "AppProfile.h"
 
 #pragma comment(lib, "imm32")
 #define IMC_GETOPENSTATUS 0x0005
@@ -161,6 +162,9 @@ void OpenKeyInit() {
 	DWORD smartSwitchKeySize;
 	BYTE* data = OpenKeyHelper::getRegBinary(_T("smartSwitchKey"), smartSwitchKeySize);
 	initSmartSwitchKey((Byte*)data, (int)smartSwitchKeySize);
+
+	//load per-application profiles
+	AppProfile::load();
 
 	//init hook
 	HINSTANCE hInstance = GetModuleHandle(NULL);
@@ -672,6 +676,9 @@ LRESULT CALLBACK mouseHookProcess(int nCode, WPARAM wParam, LPARAM lParam) {
 }
 
 VOID CALLBACK winEventProcCallback(HWINEVENTHOOK hWinEventHook, DWORD dwEvent, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime) {
+	//per-application profile: force Vietnamese/English while the app has focus
+	bool profileApplied = AppProfile::onForegroundChanged(OpenKeyHelper::getFrontMostAppExecuteName());
+
 	//smart switch key
 	if (vUseSmartSwitchKey || vRememberCode) {
 		string& exe = OpenKeyHelper::getFrontMostAppExecuteName();
@@ -679,7 +686,7 @@ VOID CALLBACK winEventProcCallback(HWINEVENTHOOK hWinEventHook, DWORD dwEvent, H
 			return;
 		_languageTemp = getAppInputMethodStatus(exe, vLanguage | (vCodeTable << 1));
 		vTempOffEngine(false);
-		if (vUseSmartSwitchKey && (_languageTemp & 0x01) != vLanguage) {
+		if (vUseSmartSwitchKey && !profileApplied && (_languageTemp & 0x01) != vLanguage) {
 			if (_languageTemp != -1) {
 				vLanguage = _languageTemp;
 				AppDelegate::getInstance()->onInputMethodChangedFromHotKey();

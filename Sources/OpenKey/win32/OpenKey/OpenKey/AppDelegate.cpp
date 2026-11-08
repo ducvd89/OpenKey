@@ -12,6 +12,7 @@ You can fork, modify, improve this program. If you
 redistribute your new version, it MUST be open source.
 -----------------------------------------------------------*/
 #include "AppDelegate.h"
+#include "AppProfile.h"
 
 static AppDelegate* _instance;
 
@@ -155,6 +156,9 @@ void AppDelegate::closeDialog(BaseDialog * dialog) {
 	} else if (macroDialog == dialog) {
 		delete macroDialog;
 		macroDialog = NULL;
+	} else if (appProfileDialog == dialog) {
+		delete appProfileDialog;
+		appProfileDialog = NULL;
 	} else if (convertDialog == dialog) {
 		delete convertDialog;
 		convertDialog = NULL;
@@ -248,6 +252,15 @@ void AppDelegate::onMacroTable() {
 	}
 }
 
+void AppDelegate::onAppProfile() {
+	if (appProfileDialog == NULL) {
+		appProfileDialog = new AppProfileDialog(hInstance, IDD_DIALOG_APP_PROFILE);
+		appProfileDialog->show();
+	} else {
+		appProfileDialog->bringOnTop();
+	}
+}
+
 void AppDelegate::onConvertTool() {
 	if (convertDialog == NULL) {
 		convertDialog = new ConvertToolDialog(hInstance, IDD_DIALOG_CONVERT_TOOL);
@@ -300,6 +313,7 @@ void AppDelegate::onOpenKeyAbout() {
 }
 
 void AppDelegate::onOpenKeyExit() {
+	AppProfile::restoreIfActive(); //don't leave the profile's mode as the saved language
 	OpenKeyManager::freeEngine();
 	SystemTrayHelper::removeSystemTray();
 	PostQuitMessage(0);
