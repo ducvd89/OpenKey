@@ -17,6 +17,7 @@ typedef void (^CheckNewVersionCallback)(void);
 +(BOOL)isInited;
 +(BOOL)initEventTap;
 +(BOOL)stopEventTap;
++(NSString *)profileIdentifierForApplication:(NSRunningApplication *)app displayName:(NSString **)displayName;
 
 +(NSArray*)getTableCodes;
 

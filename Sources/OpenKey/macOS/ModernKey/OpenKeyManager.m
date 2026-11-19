@@ -8,6 +8,8 @@
 
 #import "OpenKeyManager.h"
 #import "AppDelegate.h"
+#include <string.h>
+#include <sys/sysctl.h>
 
 extern void OpenKeyInit(void);
 
@@ -30,6 +32,57 @@ static BOOL _isInited = NO;
 static CFMachPortRef      eventTap;
 static CGEventMask        eventMask;
 static CFRunLoopSourceRef runLoopSource;
+
+static NSString *windowsExecutableName(pid_t pid) {
+    int mib[] = {CTL_KERN, KERN_PROCARGS2, pid};
+    size_t size = 0;
+    if (sysctl(mib, 3, NULL, &size, NULL, 0) != 0 || size <= sizeof(int)) {
+        return nil;
+    }
+    NSMutableData *args = [NSMutableData dataWithLength:size];
+    if (sysctl(mib, 3, args.mutableBytes, &size, NULL, 0) != 0 || size <= sizeof(int)) {
+        return nil;
+    }
+
+    // The buffer starts with argc, the native executable path, padding, and argv[0].
+    const char *bytes = args.bytes;
+    int argumentCount;
+    memcpy(&argumentCount, bytes, sizeof(argumentCount));
+    const char *end = bytes + size;
+    const char *pathEnd = memchr(bytes + sizeof(argumentCount), 0, size - sizeof(argumentCount));
+    if (argumentCount < 1 || !pathEnd) {
+        return nil;
+    }
+    const char *argument = pathEnd + 1;
+    while (argument < end && *argument == 0) {
+        argument++;
+    }
+    const char *argumentEnd = memchr(argument, 0, end - argument);
+    if (!argumentEnd) {
+        return nil;
+    }
+
+    NSString *path = [[NSString alloc] initWithBytes:argument length:argumentEnd - argument encoding:NSUTF8StringEncoding];
+    NSString *name = [path stringByReplacingOccurrencesOfString:@"\\" withString:@"/"].lastPathComponent;
+    return [name.pathExtension.lowercaseString isEqualToString:@"exe"] ? name : nil;
+}
+
++(NSString *)profileIdentifierForApplication:(NSRunningApplication *)app displayName:(NSString **)displayName {
+    NSString *identifier = app.bundleIdentifier;
+    NSString *name = app.localizedName;
+    if (!identifier.length) {
+        // Wine runs different Windows apps through the same native binary.
+        NSString *executable = windowsExecutableName(app.processIdentifier);
+        if (executable) {
+            name = executable;
+            identifier = [@"windows-exe:" stringByAppendingString:executable.lowercaseString];
+        }
+    }
+    if (displayName) {
+        *displayName = name ?: identifier;
+    }
+    return identifier;
+}
 
 +(BOOL)isInited {
     return _isInited;

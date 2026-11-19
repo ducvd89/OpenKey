@@ -23,7 +23,7 @@ extern ViewController* viewController;
 extern void OnTableCodeChange(void);
 extern void OnInputMethodChanged(void);
 extern void RequestNewSession(void);
-extern void OnActiveAppChanged(NSString *bundleIdentifier, NSString *appName);
+extern void OnActiveAppChanged(NSString *profileIdentifier, NSString *smartSwitchIdentifier);
 extern BOOL HasActiveAppProfile(void);
 
 NSString * const OpenKeyAppProfilesKey = @"AppLanguageProfiles";
@@ -555,16 +555,17 @@ extern bool convertToolDontAlertWhenCompleted;
 }
 
 -(void)activeAppChanged: (NSNotification*)note {
-    NSRunningApplication *app = note.userInfo[NSWorkspaceApplicationKey];
-    if (app && [OpenKeyManager isInited]) {
-        OnActiveAppChanged(app.bundleIdentifier, app.localizedName);
-    }
+    [self applyProfilesForApplication:note.userInfo[NSWorkspaceApplicationKey]];
 }
 
 -(void)refreshActiveApp {
-    NSRunningApplication *app = [NSWorkspace sharedWorkspace].frontmostApplication;
+    [self applyProfilesForApplication:[NSWorkspace sharedWorkspace].frontmostApplication];
+}
+
+-(void)applyProfilesForApplication:(NSRunningApplication *)app {
     if (app && [OpenKeyManager isInited]) {
-        OnActiveAppChanged(app.bundleIdentifier, app.localizedName);
+        NSString *profileIdentifier = [OpenKeyManager profileIdentifierForApplication:app displayName:NULL];
+        OnActiveAppChanged(profileIdentifier, app.bundleIdentifier ?: app.localizedName);
     }
 }
 

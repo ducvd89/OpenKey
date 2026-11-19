@@ -214,11 +214,11 @@ extern "C" {
         }
     }
 
-    void OnActiveAppChanged(NSString *bundleIdentifier, NSString *appName) {
+    void OnActiveAppChanged(NSString *profileIdentifier, NSString *smartSwitchIdentifier) {
         NSUserDefaults *prefs = [NSUserDefaults standardUserDefaults];
-        BOOL isOpenKey = [bundleIdentifier isEqualToString:OPENKEY_BUNDLE];
+        BOOL isOpenKey = [profileIdentifier isEqualToString:OPENKEY_BUNDLE];
         NSDictionary *profiles = [prefs dictionaryForKey:OpenKeyAppProfilesKey];
-        NSNumber *mode = bundleIdentifier.length && !isOpenKey ? profiles[bundleIdentifier][@"language"] : nil;
+        NSNumber *mode = profileIdentifier.length && !isOpenKey ? profiles[profileIdentifier][@"language"] : nil;
         if (![mode isKindOfClass:[NSNumber class]]) {
             mode = nil;
         }
@@ -235,7 +235,7 @@ extern "C" {
         if (isOpenKey || (!vUseSmartSwitchKey && !vRememberCode)) {
             return;
         }
-        _frontMostApp = bundleIdentifier ?: appName ?: @"UnknownApp";
+        _frontMostApp = smartSwitchIdentifier ?: @"UnknownApp";
         int rememberedLanguage = appProfileActive ? (int)[prefs integerForKey:@"InputMethod"] : vLanguage;
         int status = getAppInputMethodStatus(string(_frontMostApp.UTF8String), rememberedLanguage | (vCodeTable << 1));
         if (status == -1) {

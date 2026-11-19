@@ -1,5 +1,6 @@
 #import "AppProfilesWindowController.h"
 #import "AppDelegate.h"
+#import "OpenKeyManager.h"
 
 static NSString * const AppColumn = @"app";
 static NSString * const LanguageColumn = @"language";
@@ -176,10 +177,13 @@ static NSString * const LanguageColumn = @"language";
 
     NSMutableDictionary<NSString *, NSString *> *names = [NSMutableDictionary dictionary];
     for (NSRunningApplication *app in [NSWorkspace sharedWorkspace].runningApplications) {
-        NSString *identifier = app.bundleIdentifier;
-        if (app.activationPolicy == NSApplicationActivationPolicyRegular && identifier.length &&
-            ![identifier isEqualToString:OPENKEY_BUNDLE] && !_profiles[identifier]) {
-            names[identifier] = app.localizedName ?: identifier;
+        if (app.activationPolicy != NSApplicationActivationPolicyRegular) {
+            continue;
+        }
+        NSString *name;
+        NSString *identifier = [OpenKeyManager profileIdentifierForApplication:app displayName:&name];
+        if (identifier.length && ![identifier isEqualToString:OPENKEY_BUNDLE] && !_profiles[identifier]) {
+            names[identifier] = name;
         }
     }
     if (names.count > 0) {
