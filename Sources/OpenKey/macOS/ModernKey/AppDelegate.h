@@ -11,10 +11,14 @@
 
 #define OPENKEY_BUNDLE @"com.tuyenmai.openkey"
 
+extern NSString * const OpenKeyAppProfilesKey;
+
 @interface AppDelegate : NSObject <NSApplicationDelegate>
 
--(void)onImputMethodChanged:(BOOL)willNotify;
+-(void)setInputLanguage:(int)language remember:(BOOL)remember;
 -(void)onInputMethodSelected;
+-(void)onAppProfilesSelected;
+-(void)refreshActiveApp;
 
 -(void)askPermission;
 

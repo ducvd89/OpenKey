@@ -1275,7 +1275,7 @@
                                             </connections>
                                         </button>
                                         <button toolTip="OpenKey sẽ tự động tắt gõ tiếng Việt khi bộ gõ hệ thống không phải là tiếng Anh." verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ej5-aI-sDd">
-                                            <rect key="frame" x="18" y="23" width="317" height="18"/>
+                                            <rect key="frame" x="18" y="23" width="305" height="18"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <buttonCell key="cell" type="check" title="Tắt tiếng Việt khi bộ gõ hệ thống khác tiếng Anh" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="uew-J8-1eo">
                                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -1284,6 +1284,17 @@
                                                     <action selector="onOtherLanguage:" target="XfG-lQ-9wD" id="ttX-Rc-ZfX"/>
                                                 </connections>
                                             </buttonCell>
+                                        </button>
+                                        <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="g7P-mA-001">
+                                            <rect key="frame" x="327" y="16" width="179" height="30"/>
+                                            <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
+                                            <buttonCell key="cell" type="push" title="Chế độ gõ theo ứng dụng…" bezelStyle="rounded" alignment="center" borderStyle="border" inset="2" id="g7P-mA-002">
+                                                <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                                <font key="font" metaFont="system"/>
+                                            </buttonCell>
+                                            <connections>
+                                                <action selector="onAppProfilesSelected:" target="XfG-lQ-9wD" id="g7P-mA-003"/>
+                                            </connections>
                                         </button>
                                     </subviews>
                                 </view>

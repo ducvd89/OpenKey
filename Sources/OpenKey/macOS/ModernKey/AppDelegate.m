@@ -13,6 +13,7 @@
 #include <libproc.h>
 #include <sys/proc_info.h>
 #import "AppDelegate.h"
+#import "AppProfilesWindowController.h"
 #import "ViewController.h"
 #import "OpenKeyManager.h"
 #import "MJAccessibilityUtils.h"
@@ -22,7 +23,10 @@ extern ViewController* viewController;
 extern void OnTableCodeChange(void);
 extern void OnInputMethodChanged(void);
 extern void RequestNewSession(void);
-extern void OnActiveAppChanged(void);
+extern void OnActiveAppChanged(NSString *bundleIdentifier, NSString *appName);
+extern BOOL HasActiveAppProfile(void);
+
+NSString * const OpenKeyAppProfilesKey = @"AppLanguageProfiles";
 
 //see document in Engine.h
 int vLanguage = 1;
@@ -70,6 +74,7 @@ extern bool convertToolDontAlertWhenCompleted;
     NSWindowController *_macroWC;
     NSWindowController *_convertWC;
     NSWindowController *_aboutWC;
+    AppProfilesWindowController *_appProfilesWC;
     
     NSStatusItem *statusItem;
     NSMenu *theMenu;
@@ -199,6 +204,7 @@ extern bool convertToolDontAlertWhenCompleted;
 }
 
 -(void) createStatusBarMenu {
+    vLanguage = (int)[[NSUserDefaults standardUserDefaults] integerForKey:@"InputMethod"];
     NSStatusBar *statusBar = [NSStatusBar systemStatusBar];
     statusItem = [statusBar statusItemWithLength:NSVariableStatusItemLength];
     statusItem.button.image = [NSImage imageNamed:@"Status"];
@@ -231,6 +237,9 @@ extern bool convertToolDontAlertWhenCompleted;
     [theMenu addItem:[NSMenuItem separatorItem]];
     
     [theMenu addItemWithTitle:@"Bảng điều khiển..." action:@selector(onControlPanelSelected) keyEquivalent:@""];
+    NSMenuItem *profiles = [theMenu addItemWithTitle:@"Chế độ gõ theo ứng dụng…"
+                                              action:@selector(onAppProfilesSelected) keyEquivalent:@""];
+    profiles.target = self;
     [theMenu addItemWithTitle:@"Gõ tắt..." action:@selector(onMacroSelected) keyEquivalent:@""];
     [theMenu addItemWithTitle:@"Giới thiệu" action:@selector(onAboutSelected) keyEquivalent:@""];
     [theMenu addItem:[NSMenuItem separatorItem]];
@@ -315,6 +324,7 @@ extern bool convertToolDontAlertWhenCompleted;
     [[NSUserDefaults standardUserDefaults] setInteger:1 forKey:@"GrayIcon"];
     [[NSUserDefaults standardUserDefaults] setInteger:1 forKey:@"RunOnStartup"];
 
+    [self refreshActiveApp];
     [self fillData];
     [viewController fillData];
 }
@@ -363,9 +373,8 @@ extern bool convertToolDontAlertWhenCompleted;
 
 - (void) fillData {
     //fill data
-    NSInteger intInputMethod = [[NSUserDefaults standardUserDefaults] integerForKey:@"InputMethod"];
     NSInteger grayIcon = [[NSUserDefaults standardUserDefaults] integerForKey:@"GrayIcon"];
-    if (intInputMethod == 1) {
+    if (vLanguage == 1) {
         [menuInputMethod setState:NSControlStateValueOn];
         statusItem.button.image = [NSImage imageNamed:@"Status"];
         [statusItem.button.image setTemplate:(grayIcon ? YES : NO)];
@@ -376,8 +385,6 @@ extern bool convertToolDontAlertWhenCompleted;
         [statusItem.button.image setTemplate:(grayIcon ? YES : NO)];
         statusItem.button.alternateImage = [NSImage imageNamed:@"StatusHighlightedEng"];
     }
-    vLanguage = (int)intInputMethod;
-    
     NSInteger intInputType = [[NSUserDefaults standardUserDefaults] integerForKey:@"InputType"];
     [mnuTelex setState:NSControlStateValueOff];
     [mnuVNI setState:NSControlStateValueOff];
@@ -424,25 +431,26 @@ extern bool convertToolDontAlertWhenCompleted;
 
 }
 
--(void)onImputMethodChanged:(BOOL)willNotify {
-    NSInteger intInputMethod = [[NSUserDefaults standardUserDefaults] integerForKey:@"InputMethod"];
-    if (intInputMethod == 0)
-        intInputMethod = 1;
-    else
-        intInputMethod = 0;
-    vLanguage = (int)intInputMethod;
-    [[NSUserDefaults standardUserDefaults] setInteger:intInputMethod forKey:@"InputMethod"];
-
+-(void)setInputLanguage:(int)language remember:(BOOL)remember {
+    vLanguage = language;
+    if (remember) {
+        [[NSUserDefaults standardUserDefaults] setInteger:language forKey:@"InputMethod"];
+    }
     [self fillData];
     [viewController fillData];
-    
-    if (willNotify)
-        OnInputMethodChanged();
 }
 
 #pragma mark -StatusBar menu action
 - (void)onInputMethodSelected {
-    [self onImputMethodChanged:YES];
+    [self setInputLanguage:!vLanguage remember:!HasActiveAppProfile()];
+    OnInputMethodChanged();
+}
+
+- (void)onAppProfilesSelected {
+    if (!_appProfilesWC) {
+        _appProfilesWC = [[AppProfilesWindowController alloc] init];
+    }
+    [_appProfilesWC showWindow:self];
 }
 
 - (void)onInputTypeSelected:(id)sender {
@@ -547,8 +555,16 @@ extern bool convertToolDontAlertWhenCompleted;
 }
 
 -(void)activeAppChanged: (NSNotification*)note {
-    if (vUseSmartSwitchKey && [OpenKeyManager isInited]) {
-        OnActiveAppChanged();
+    NSRunningApplication *app = note.userInfo[NSWorkspaceApplicationKey];
+    if (app && [OpenKeyManager isInited]) {
+        OnActiveAppChanged(app.bundleIdentifier, app.localizedName);
+    }
+}
+
+-(void)refreshActiveApp {
+    NSRunningApplication *app = [NSWorkspace sharedWorkspace].frontmostApplication;
+    if (app && [OpenKeyManager isInited]) {
+        OnActiveAppChanged(app.bundleIdentifier, app.localizedName);
     }
 }
 

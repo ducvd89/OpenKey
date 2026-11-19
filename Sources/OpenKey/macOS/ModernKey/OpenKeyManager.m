@@ -7,6 +7,7 @@
 //
 
 #import "OpenKeyManager.h"
+#import "AppDelegate.h"
 
 extern void OpenKeyInit(void);
 
@@ -73,6 +74,7 @@ static CFRunLoopSourceRef runLoopSource;
     
     // Enable the event tap.
     CGEventTapEnable(eventTap, true);
+    [(AppDelegate *)NSApp.delegate refreshActiveApp];
     
     return YES;
 }

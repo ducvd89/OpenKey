@@ -81,8 +81,8 @@ extern "C" {
     Uint32 _tempChar;
     bool _hasJustUsedHotKey = false;
 
-    int _languageTemp = 0; //use for smart switch key
     vector<Byte> savedSmartSwitchKeyData; ////use for smart switch key
+    static BOOL appProfileActive;
     
     NSString* _frontMostApp = @"UnknownApp";
     
@@ -154,11 +154,9 @@ extern "C" {
     }
     
     void queryFrontMostApp() {
-        if ([[[NSWorkspace sharedWorkspace] frontmostApplication].bundleIdentifier compare:OPENKEY_BUNDLE] != 0) {
-            _frontMostApp = [[NSWorkspace sharedWorkspace] frontmostApplication].bundleIdentifier;
-            if (_frontMostApp == nil)
-                _frontMostApp = [[NSWorkspace sharedWorkspace] frontmostApplication].localizedName != nil ?
-                [[NSWorkspace sharedWorkspace] frontmostApplication].localizedName : @"UnknownApp";
+        NSRunningApplication *app = [NSWorkspace sharedWorkspace].frontmostApplication;
+        if (app && ![app.bundleIdentifier isEqualToString:OPENKEY_BUNDLE]) {
+            _frontMostApp = app.bundleIdentifier ?: app.localizedName ?: @"UnknownApp";
         }
     }
     
@@ -204,23 +202,50 @@ extern "C" {
         [prefs setObject:_data forKey:@"smartSwitchKey"];
     }
     
-    void OnActiveAppChanged() { //use for smart switch key; improved on Sep 28th, 2019
-        queryFrontMostApp();
-        _languageTemp = getAppInputMethodStatus(string(_frontMostApp.UTF8String), vLanguage | (vCodeTable << 1));
-        if ((_languageTemp & 0x01) != vLanguage) { //for input method
-            if (_languageTemp != -1) {
-                vLanguage = _languageTemp;
-                [appDelegate onImputMethodChanged:NO];
-                startNewSession();
-            } else {
-                saveSmartSwitchKeyData();
-            }
+    BOOL HasActiveAppProfile(void) {
+        return appProfileActive;
+    }
+
+    static void applyAutomaticLanguage(int language, BOOL remember) {
+        if (language != vLanguage) {
+            [appDelegate setInputLanguage:language remember:remember];
+            vTempOffEngine(false);
+            startNewSession();
         }
-        if (vRememberCode && (_languageTemp >> 1) != vCodeTable) { //for remember table code feature
-            if (_languageTemp != -1) {
-                [appDelegate onCodeTableChanged:(_languageTemp >> 1)];
-            } else {
-                saveSmartSwitchKeyData();
+    }
+
+    void OnActiveAppChanged(NSString *bundleIdentifier, NSString *appName) {
+        NSUserDefaults *prefs = [NSUserDefaults standardUserDefaults];
+        BOOL isOpenKey = [bundleIdentifier isEqualToString:OPENKEY_BUNDLE];
+        NSDictionary *profiles = [prefs dictionaryForKey:OpenKeyAppProfilesKey];
+        NSNumber *mode = bundleIdentifier.length && !isOpenKey ? profiles[bundleIdentifier][@"language"] : nil;
+        if (![mode isKindOfClass:[NSNumber class]]) {
+            mode = nil;
+        }
+
+        // InputMethod remains the normal language while a profile is active.
+        BOOL hadProfile = appProfileActive;
+        appProfileActive = mode != nil;
+        if (mode) {
+            applyAutomaticLanguage(mode.boolValue, NO);
+        } else if (hadProfile) {
+            applyAutomaticLanguage((int)[prefs integerForKey:@"InputMethod"], NO);
+        }
+
+        if (isOpenKey || (!vUseSmartSwitchKey && !vRememberCode)) {
+            return;
+        }
+        _frontMostApp = bundleIdentifier ?: appName ?: @"UnknownApp";
+        int rememberedLanguage = appProfileActive ? (int)[prefs integerForKey:@"InputMethod"] : vLanguage;
+        int status = getAppInputMethodStatus(string(_frontMostApp.UTF8String), rememberedLanguage | (vCodeTable << 1));
+        if (status == -1) {
+            saveSmartSwitchKeyData();
+        } else {
+            if (vUseSmartSwitchKey && !appProfileActive) {
+                applyAutomaticLanguage(status & 1, YES);
+            }
+            if (vRememberCode && (status >> 1) != vCodeTable) {
+                [appDelegate onCodeTableChanged:status >> 1];
             }
         }
     }
@@ -229,17 +254,26 @@ extern "C" {
         onTableCodeChange();
         if (vRememberCode) {
             queryFrontMostApp();
-            setAppInputMethodStatus(string(_frontMostApp.UTF8String), vLanguage | (vCodeTable << 1));
+            string app(_frontMostApp.UTF8String);
+            int language = vLanguage;
+            if (appProfileActive) {
+                int normalLanguage = (int)[[NSUserDefaults standardUserDefaults] integerForKey:@"InputMethod"];
+                int previous = getAppInputMethodStatus(app, normalLanguage | (vCodeTable << 1));
+                language = previous == -1 ? normalLanguage : previous & 1;
+            }
+            setAppInputMethodStatus(app, language | (vCodeTable << 1));
             saveSmartSwitchKeyData();
         }
     }
     
     void OnInputMethodChanged() {
-        if (vUseSmartSwitchKey) {
+        if (vUseSmartSwitchKey && !appProfileActive) {
             queryFrontMostApp();
             setAppInputMethodStatus(string(_frontMostApp.UTF8String), vLanguage | (vCodeTable << 1));
             saveSmartSwitchKeyData();
         }
+        vTempOffEngine(false);
+        startNewSession();
     }
     
     void OnSpellCheckingChanged() {
@@ -531,14 +565,9 @@ extern "C" {
     }
     
     void switchLanguage() {
-        if (vLanguage == 0)
-            vLanguage = 1;
-        else
-            vLanguage = 0;
         if (HAS_BEEP(vSwitchKeyStatus))
             NSBeep();
-        [appDelegate onImputMethodChanged:YES];
-        startNewSession();
+        [appDelegate onInputMethodSelected];
     }
     
     void handleMacro() {

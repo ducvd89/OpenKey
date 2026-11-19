@@ -16,6 +16,7 @@ extern void OnSpellCheckingChanged(void);
 
 ViewController* viewController;
 extern int vFreeMark;
+extern int vLanguage;
 extern int vCheckSpelling;
 extern int vUseModernOrthography;
 extern int vSwitchKeyStatus;
@@ -169,6 +170,10 @@ extern int vPerformLayoutCompat;
 
 - (IBAction)onLanguageChanged:(id)sender {
     [appDelegate onInputMethodSelected];
+}
+
+- (IBAction)onAppProfilesSelected:(id)sender {
+    [appDelegate onAppProfilesSelected];
 }
 
 - (IBAction)onRestart:(id)sender {
@@ -383,12 +388,8 @@ extern int vPerformLayoutCompat;
 -(void)fillData {
     NSInteger value;
     
-    NSInteger intInputMethod = [[NSUserDefaults standardUserDefaults] integerForKey:@"InputMethod"];
-    if (intInputMethod == 1) {
-        self.VietButton.state = NSControlStateValueOn;
-    } else if (intInputMethod == 0) {
-        self.EngButton.state = NSControlStateValueOn;
-    }
+    self.VietButton.state = vLanguage ? NSControlStateValueOn : NSControlStateValueOff;
+    self.EngButton.state = vLanguage ? NSControlStateValueOff : NSControlStateValueOn;
     
     NSInteger intInputType = [[NSUserDefaults standardUserDefaults] integerForKey:@"InputType"];
     [self.popupInputType selectItemAtIndex:intInputType];
