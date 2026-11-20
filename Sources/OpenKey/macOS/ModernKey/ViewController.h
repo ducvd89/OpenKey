@@ -25,6 +25,7 @@
 
 @property (weak) IBOutlet NSBox *appOK;
 @property (weak) IBOutlet NSBox *permissionWarning;
+@property (weak) IBOutlet NSTextField *permissionWarningLabel;
 @property (weak) IBOutlet NSButton *retryButton;
 
 @property (weak) IBOutlet NSButton *VietButton;
@@ -71,5 +72,6 @@
 @property (weak) IBOutlet NSImageView *cursorImage;
 
 -(void)fillData;
+-(void)updateInputPermissionStatus:(BOOL)ready hasAccessibility:(BOOL)hasAccessibility;
 @end
 

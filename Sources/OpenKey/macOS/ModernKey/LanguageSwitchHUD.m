@@ -5,6 +5,7 @@
     NSPanel *_panel;
     NSArray<NSVisualEffectView *> *_options;
     NSArray<NSTextField *> *_labels;
+    NSTextField *_previewLabel;
     NSTimer *_hideTimer;
 }
 
@@ -23,7 +24,7 @@
     _panel.hasShadow = YES;
     _panel.ignoresMouseEvents = YES;
     _panel.hidesOnDeactivate = NO;
-    _panel.level = NSStatusWindowLevel;
+    _panel.level = CGWindowLevelForKey(kCGOverlayWindowLevelKey);
     _panel.animationBehavior = NSWindowAnimationBehaviorNone;
     _panel.collectionBehavior = NSWindowCollectionBehaviorCanJoinAllSpaces |
                                 NSWindowCollectionBehaviorFullScreenAuxiliary |
@@ -63,15 +64,31 @@
     }
     _options = [options copy];
     _labels = [labels copy];
+
+    _previewLabel = [NSTextField labelWithString:@""];
+    _previewLabel.font = [NSFont systemFontOfSize:16 weight:NSFontWeightMedium];
+    _previewLabel.alignment = NSTextAlignmentCenter;
+    _previewLabel.textColor = NSColor.labelColor;
+    [background addSubview:_previewLabel];
     return self;
 }
 
-- (void)showVietnamese:(BOOL)vietnamese {
+- (void)showVietnamese:(BOOL)vietnamese whileHeld:(BOOL)whileHeld {
+    [_panel setContentSize:whileHeld ? NSMakeSize(150, 46) : NSMakeSize(288, 62)];
     NSUInteger selectedIndex = vietnamese ? 1 : 0;
     for (NSUInteger index = 0; index < _options.count; index++) {
         BOOL selected = index == selectedIndex;
-        _options[index].hidden = !selected;
+        _options[index].hidden = whileHeld || !selected;
+        _labels[index].hidden = whileHeld;
         _labels[index].textColor = selected ? NSColor.alternateSelectedControlTextColor : NSColor.labelColor;
+    }
+    _previewLabel.hidden = !whileHeld;
+    if (whileHeld) {
+        _previewLabel.stringValue = _labels[selectedIndex].stringValue;
+        [_previewLabel sizeToFit];
+        NSRect bounds = _panel.contentView.bounds;
+        CGFloat labelHeight = NSHeight(_previewLabel.frame);
+        _previewLabel.frame = NSMakeRect(0, NSMidY(bounds) - labelHeight / 2, NSWidth(bounds), labelHeight);
     }
 
     NSScreen *screen = NSScreen.mainScreen;
@@ -92,13 +109,21 @@
     [_panel orderFrontRegardless];
 
     [_hideTimer invalidate];
-    _hideTimer = [NSTimer timerWithTimeInterval:0.95 target:self selector:@selector(hidePanel:) userInfo:nil repeats:NO];
-    [NSRunLoop.mainRunLoop addTimer:_hideTimer forMode:NSRunLoopCommonModes];
+    _hideTimer = nil;
+    if (!whileHeld) {
+        _hideTimer = [NSTimer timerWithTimeInterval:0.95 target:self selector:@selector(hidePanel:) userInfo:nil repeats:NO];
+        [NSRunLoop.mainRunLoop addTimer:_hideTimer forMode:NSRunLoopCommonModes];
+    }
 }
 
 - (void)hidePanel:(NSTimer *)timer {
-    [_panel orderOut:nil];
+    [self dismiss];
+}
+
+- (void)dismiss {
+    [_hideTimer invalidate];
     _hideTimer = nil;
+    [_panel orderOut:nil];
 }
 
 @end

@@ -18,10 +18,13 @@ extern NSString * const OpenKeyAppProfilesKey;
 -(void)setInputLanguage:(int)language remember:(BOOL)remember;
 -(void)onInputMethodSelected;
 -(void)showLanguageSwitchHUD;
+-(void)beginLanguageSwitchPreview;
+-(void)endLanguageSwitchPreview;
 -(void)onAppProfilesSelected;
 -(void)refreshActiveApp;
 
--(void)askPermission;
+-(BOOL)refreshInputPermission;
+-(void)requestInputPermission;
 
 -(void)onInputTypeSelectedIndex:(int)index;
 -(void)onCodeTableChanged:(int)index;

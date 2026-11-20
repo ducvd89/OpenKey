@@ -1071,7 +1071,7 @@
                                     <action selector="onSwitchLanguageWithFn:" target="XfG-lQ-9wD" id="fNs-38-Y4R"/>
                                 </connections>
                             </button>
-                            <button toolTip="Hiện bảng báo Tiếng Anh/Tiếng Việt khi dùng phím tắt để đổi ngôn ngữ." verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="hUd-38-Y4P">
+                            <button toolTip="Hiện ngôn ngữ hiện tại khi giữ 🌐/Fn. Với phím tắt khác, hiện ngôn ngữ sau khi chuyển." verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="hUd-38-Y4P">
                                 <rect key="frame" x="415" y="1050" width="116" height="18"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <buttonCell key="cell" type="check" title="Hiện bảng báo" bezelStyle="regularSquare" imagePosition="left" inset="2" id="hUd-38-Y4Q">
@@ -1753,6 +1753,7 @@
                         <outlet property="VietButton" destination="qjz-9i-VOQ" id="Jpa-0e-ZDo"/>
                         <outlet property="appOK" destination="S26-ZU-sFD" id="f3J-H0-epQ"/>
                         <outlet property="permissionWarning" destination="5SM-Mt-ady" id="MSR-ei-1L6"/>
+                        <outlet property="permissionWarningLabel" destination="Pu7-Hr-lmp" id="pRm-wN-Lbl"/>
                         <outlet property="popupCode" destination="9pW-S5-fU9" id="xHD-cL-Ohl"/>
                         <outlet property="popupInputType" destination="pSJ-2j-2yI" id="c9v-rt-btf"/>
                         <outlet property="retryButton" destination="D1q-YJ-LXd" id="R2Z-I7-q1P"/>

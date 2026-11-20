@@ -82,14 +82,18 @@ extern "C" {
     Uint32 _tempChar;
     bool _hasJustUsedHotKey = false;
     static bool fnShortcutArmed = false;
+    static bool fnKeyDown = false;
 
     vector<Byte> savedSmartSwitchKeyData; ////use for smart switch key
     static NSString *activeAppProfileIdentifier;
+    static BOOL passwordFieldActive;
+    static int inputLanguageBeforePasswordField;
     
     NSString* _frontMostApp = @"UnknownApp";
     
     void OpenKeyInit() {
         fnShortcutArmed = false;
+        fnKeyDown = false;
         //load saved data
         vFreeMark = 0;//(int)[[NSUserDefaults standardUserDefaults] integerForKey:@"FreeMark"];
         LOAD_DATA(vCodeTable, CodeTable); if (vCodeTable < 0) vCodeTable = 0;
@@ -210,11 +214,28 @@ extern "C" {
         return activeAppProfileIdentifier != nil;
     }
 
+    BOOL HasTemporaryInputLanguage(void) {
+        return passwordFieldActive || HasActiveAppProfile();
+    }
+
     static void applyAutomaticLanguage(int language, BOOL remember) {
         if (language != vLanguage) {
             [appDelegate setInputLanguage:language remember:remember];
             vTempOffEngine(false);
             startNewSession();
+        }
+    }
+
+    void OnPasswordFieldChanged(BOOL isPasswordField) {
+        if (isPasswordField) {
+            if (!passwordFieldActive) {
+                inputLanguageBeforePasswordField = vLanguage;
+                passwordFieldActive = YES;
+            }
+            applyAutomaticLanguage(0, NO);
+        } else if (passwordFieldActive) {
+            passwordFieldActive = NO;
+            applyAutomaticLanguage(inputLanguageBeforePasswordField, NO);
         }
     }
 
@@ -243,12 +264,12 @@ extern "C" {
             return;
         }
         _frontMostApp = smartSwitchIdentifier ?: @"UnknownApp";
-        int rememberedLanguage = HasActiveAppProfile() ? (int)[prefs integerForKey:@"InputMethod"] : vLanguage;
+        int rememberedLanguage = HasTemporaryInputLanguage() ? (int)[prefs integerForKey:@"InputMethod"] : vLanguage;
         int status = getAppInputMethodStatus(string(_frontMostApp.UTF8String), rememberedLanguage | (vCodeTable << 1));
         if (status == -1) {
             saveSmartSwitchKeyData();
         } else {
-            if (vUseSmartSwitchKey && !HasActiveAppProfile()) {
+            if (vUseSmartSwitchKey && !HasTemporaryInputLanguage()) {
                 applyAutomaticLanguage(status & 1, YES);
             }
             if (vRememberCode && (status >> 1) != vCodeTable) {
@@ -263,7 +284,7 @@ extern "C" {
             queryFrontMostApp();
             string app(_frontMostApp.UTF8String);
             int language = vLanguage;
-            if (HasActiveAppProfile()) {
+            if (HasTemporaryInputLanguage()) {
                 int normalLanguage = (int)[[NSUserDefaults standardUserDefaults] integerForKey:@"InputMethod"];
                 int previous = getAppInputMethodStatus(app, normalLanguage | (vCodeTable << 1));
                 language = previous == -1 ? normalLanguage : previous & 1;
@@ -274,7 +295,7 @@ extern "C" {
     }
     
     void OnInputMethodChanged() {
-        if (vUseSmartSwitchKey && !HasActiveAppProfile()) {
+        if (vUseSmartSwitchKey && !HasTemporaryInputLanguage()) {
             queryFrontMostApp();
             setAppInputMethodStatus(string(_frontMostApp.UTF8String), vLanguage | (vCodeTable << 1));
             saveSmartSwitchKeyData();
@@ -571,12 +592,24 @@ extern "C" {
         return true;
     }
     
-    void switchLanguage() {
+    void switchLanguage(bool showTimedHUD = true) {
         if (HAS_BEEP(vSwitchKeyStatus))
             NSBeep();
         [appDelegate onInputMethodSelected];
+        if (showTimedHUD) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [appDelegate showLanguageSwitchHUD];
+            });
+        }
+    }
+
+    static void endFnShortcut() {
+        if (!fnShortcutArmed) {
+            return;
+        }
+        fnShortcutArmed = false;
         dispatch_async(dispatch_get_main_queue(), ^{
-            [appDelegate showLanguageSwitchHUD];
+            [appDelegate endLanguageSwitchPreview];
         });
     }
     
@@ -639,7 +672,8 @@ extern "C" {
      */
     CGEventRef OpenKeyCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef event, void *refcon) {
         if (type == kCGEventTapDisabledByTimeout || type == kCGEventTapDisabledByUserInput) {
-            fnShortcutArmed = false;
+            fnKeyDown = false;
+            endFnShortcut();
             return event;
         }
         //dont handle my event
@@ -649,21 +683,29 @@ extern "C" {
         
         _flag = CGEventGetFlags(event);
         _keycode = (CGKeyCode)CGEventGetIntegerValueField(event, kCGKeyboardEventKeycode);
-        if (vSwitchLanguageWithFn && type == kCGEventFlagsChanged && _keycode == kVK_Function) {
+        if ((vSwitchLanguageWithFn || fnKeyDown) && type == kCGEventFlagsChanged && _keycode == kVK_Function) {
             const CGEventFlags shortcutModifiers = kCGEventFlagMaskControl | kCGEventFlagMaskAlternate |
                                                    kCGEventFlagMaskCommand | kCGEventFlagMaskShift;
             if (_flag & kCGEventFlagMaskSecondaryFn) {
-                fnShortcutArmed = !(_flag & shortcutModifiers);
-            } else {
-                bool shouldSwitch = fnShortcutArmed && !(_flag & shortcutModifiers);
-                fnShortcutArmed = false;
-                if (shouldSwitch) {
-                    switchLanguage();
+                if (!fnKeyDown) {
+                    fnKeyDown = true;
+                    if (!(_flag & shortcutModifiers)) {
+                        fnShortcutArmed = true;
+                        dispatch_async(dispatch_get_main_queue(), ^{
+                            [appDelegate beginLanguageSwitchPreview];
+                        });
+                    }
                 }
+            } else {
+                fnKeyDown = false;
+                if (vSwitchLanguageWithFn && fnShortcutArmed && !(_flag & shortcutModifiers)) {
+                    switchLanguage(false);
+                }
+                endFnShortcut();
             }
             return event;
         }
-        fnShortcutArmed = false;
+        endFnShortcut();
         
         if (type == kCGEventKeyDown && vPerformLayoutCompat) {
             // If conversion fail, use current keycode
@@ -728,6 +770,9 @@ extern "C" {
         
         //If is in english mode
         if (vLanguage == 0) {
+            if (passwordFieldActive) {
+                return event;
+            }
             if (vUseMacro && vUseMacroInEnglishMode && type == kCGEventKeyDown) {
                 vEnglishMode((type == kCGEventKeyDown ? vKeyEventState::KeyDown : vKeyEventState::MouseDown),
                              _keycode,

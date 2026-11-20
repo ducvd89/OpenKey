@@ -98,8 +98,6 @@ extern int vPerformLayoutCompat;
     [self.popupCode removeAllItems];
     [self.popupCode addItemsWithTitles:codeData];
     
-    [self initKey];
-    
     [self fillData];
     
     // set version info
@@ -116,18 +114,18 @@ extern int vPerformLayoutCompat;
 }
 
 - (void)viewWillAppear {
-    [self initKey];
+    [super viewWillAppear];
+    [appDelegate refreshInputPermission];
 }
 
--(void)initKey {
-    dispatch_async(dispatch_get_main_queue(), ^{
-        if (![OpenKeyManager initEventTap]) {
-            //self.permissionWarning.hidden = NO;
-            //self.retryButton.enabled = YES;
-        } else {
-            //self.appOK.hidden = NO;
-        }
-    });
+-(void)updateInputPermissionStatus:(BOOL)ready hasAccessibility:(BOOL)hasAccessibility {
+    self.appOK.hidden = !ready;
+    self.permissionWarning.hidden = ready;
+    self.retryButton.enabled = !ready;
+    self.retryButton.title = hasAccessibility ? @"Thử lại" : @"Cấp quyền";
+    self.permissionWarningLabel.stringValue = hasAccessibility
+        ? @"Chưa bật được bộ gõ. Hãy thử lại."
+        : @"OpenKey cần quyền Trợ năng để hoạt động.";
 }
 
 - (void)setRepresentedObject:(id)representedObject {
@@ -188,11 +186,7 @@ extern int vPerformLayoutCompat;
 }
 
 - (IBAction)onRestart:(id)sender {
-    self.appOK.hidden = YES;
-    self.permissionWarning.hidden = YES;
-    self.retryButton.enabled = NO;
-    
-    [self initKey];
+    [appDelegate requestInputPermission];
 }
 
 - (IBAction)onFreeMark:(NSButton *)sender {
@@ -496,7 +490,8 @@ extern int vPerformLayoutCompat;
     CustomSwitchCommand.state = (vSwitchKeyStatus & 0x400) ? NSControlStateValueOn : NSControlStateValueOff;
     CustomSwitchShift.state = (vSwitchKeyStatus & 0x800) ? NSControlStateValueOn : NSControlStateValueOff;
     CustomBeepSound.state = (vSwitchKeyStatus & 0x8000) ? NSControlStateValueOn : NSControlStateValueOff;
-    SwitchLanguageWithFn.state = vSwitchLanguageWithFn ? NSControlStateValueOn : NSControlStateValueOff;
+    SwitchLanguageWithFn.state = [[NSUserDefaults standardUserDefaults] boolForKey:@"SwitchLanguageWithFn"]
+        ? NSControlStateValueOn : NSControlStateValueOff;
     ShowLanguageSwitchHUD.state = [[NSUserDefaults standardUserDefaults] boolForKey:@"ShowLanguageSwitchHUD"]
         ? NSControlStateValueOn : NSControlStateValueOff;
     [CustomSwitchKey setTextByChar:((vSwitchKeyStatus>>24) & 0xFF)];

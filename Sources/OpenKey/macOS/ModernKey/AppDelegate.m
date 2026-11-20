@@ -9,6 +9,7 @@
 #import <AppKit/AppKit.h>
 #import <Carbon/Carbon.h>
 #import <Cocoa/Cocoa.h>
+#import <ApplicationServices/ApplicationServices.h>
 #import <ServiceManagement/ServiceManagement.h>
 #include <libproc.h>
 #include <sys/proc_info.h>
@@ -25,7 +26,8 @@ extern void OnTableCodeChange(void);
 extern void OnInputMethodChanged(void);
 extern void RequestNewSession(void);
 extern void OnActiveAppChanged(NSString *profileIdentifier, NSString *smartSwitchIdentifier);
-extern BOOL HasActiveAppProfile(void);
+extern BOOL HasTemporaryInputLanguage(void);
+extern void OnPasswordFieldChanged(BOOL isPasswordField);
 
 NSString * const OpenKeyAppProfilesKey = @"AppLanguageProfiles";
 
@@ -67,9 +69,13 @@ extern int convertToolHotKey;
 extern bool convertToolDontAlertWhenCompleted;
 
 @interface AppDelegate ()
-
+- (void)refreshFocusedPasswordField;
 @end
 
+static void passwordFieldFocusChanged(AXObserverRef observer, AXUIElementRef element,
+                                      CFStringRef notification, void *context) {
+    [(__bridge AppDelegate *)context refreshFocusedPasswordField];
+}
 
 @implementation AppDelegate {
     NSWindowController *_mainWC;
@@ -78,6 +84,12 @@ extern bool convertToolDontAlertWhenCompleted;
     NSWindowController *_aboutWC;
     AppProfilesWindowController *_appProfilesWC;
     LanguageSwitchHUD *_languageSwitchHUD;
+    NSTimer *_languagePreviewTimer;
+    NSTimer *_permissionRetryTimer;
+    AXUIElementRef _observedPasswordApplication;
+    AXObserverRef _passwordFieldObserver;
+    AXUIElementRef _focusedPasswordField;
+    pid_t _observedPasswordPID;
     
     NSStatusItem *statusItem;
     NSMenu *theMenu;
@@ -99,24 +111,33 @@ extern bool convertToolDontAlertWhenCompleted;
     NSMenuItem* mnuQuickConvert;
 }
 
--(void)askPermission {
-    NSAlert *alert = [[NSAlert alloc] init];
-    [alert setMessageText: [NSString stringWithFormat:@"OpenKey cần bạn cấp quyền để có thể hoạt động!"]];
-    [alert setInformativeText:@"Vui lòng chạy lại ứng dụng sau khi cấp quyền."];
-
-    [alert addButtonWithTitle:@"Không"];
-    [alert addButtonWithTitle:@"Cấp quyền"];
-
-    [alert.window makeKeyAndOrderFront:nil];
-    [alert.window setLevel:NSStatusWindowLevel];
-
-    NSModalResponse res = [alert runModal];
-
-    if (res == 1001) {
+-(void)requestInputPermission {
+    if (![self refreshInputPermission] && !MJAccessibilityIsEnabled()) {
         MJAccessibilityOpenPanel();
     }
+}
 
-    [NSApp terminate:0];
+-(BOOL)refreshInputPermission {
+    BOOL ready = [OpenKeyManager initEventTap];
+    [viewController updateInputPermissionStatus:ready hasAccessibility:ready || MJAccessibilityIsEnabled()];
+    if (ready) {
+        [self stopPermissionRetry];
+    } else if (!_permissionRetryTimer) {
+        _permissionRetryTimer = [NSTimer scheduledTimerWithTimeInterval:1.0
+                                                                 target:self
+                                                               selector:@selector(retryInputPermission:)
+                                                               userInfo:nil repeats:YES];
+    }
+    return ready;
+}
+
+-(void)retryInputPermission:(NSTimer *)timer {
+    [self refreshInputPermission];
+}
+
+-(void)stopPermissionRetry {
+    [_permissionRetryTimer invalidate];
+    _permissionRetryTimer = nil;
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
@@ -153,12 +174,6 @@ extern bool convertToolDontAlertWhenCompleted;
         return;
     }
     
-    // check if user granted Accessabilty permission
-    if (!MJAccessibilityIsEnabled()) {
-        [self askPermission];
-        return;
-    }
-    
     vShowIconOnDock = (int)[[NSUserDefaults standardUserDefaults] integerForKey:@"vShowIconOnDock"];
     if (vShowIconOnDock)
         [NSApp setActivationPolicy: NSApplicationActivationPolicyRegular];
@@ -170,7 +185,7 @@ extern bool convertToolDontAlertWhenCompleted;
     
     //init
     dispatch_async(dispatch_get_main_queue(), ^{
-        if (![OpenKeyManager initEventTap]) {
+        if (![self refreshInputPermission]) {
             [self onControlPanelSelected];
         } else {
             NSInteger showui = [[NSUserDefaults standardUserDefaults] integerForKey:@"ShowUIOnStartup"];
@@ -203,7 +218,8 @@ extern bool convertToolDontAlertWhenCompleted;
 }
 
 - (void)applicationWillTerminate:(NSNotification *)aNotification {
-    // Insert code here to tear down your application
+    [self stopPermissionRetry];
+    [self stopObservingPasswordFields];
 }
 
 -(void) createStatusBarMenu {
@@ -447,18 +463,46 @@ extern bool convertToolDontAlertWhenCompleted;
 
 #pragma mark -StatusBar menu action
 - (void)onInputMethodSelected {
-    [self setInputLanguage:!vLanguage remember:!HasActiveAppProfile()];
+    [self setInputLanguage:!vLanguage remember:!HasTemporaryInputLanguage()];
     OnInputMethodChanged();
 }
 
 - (void)showLanguageSwitchHUD {
+    [self showLanguageSwitchHUDWhileHeld:NO];
+}
+
+- (void)showLanguageSwitchHUDWhileHeld:(BOOL)whileHeld {
     if (![[NSUserDefaults standardUserDefaults] boolForKey:@"ShowLanguageSwitchHUD"]) {
         return;
     }
     if (!_languageSwitchHUD) {
         _languageSwitchHUD = [[LanguageSwitchHUD alloc] init];
     }
-    [_languageSwitchHUD showVietnamese:vLanguage == 1];
+    [_languageSwitchHUD showVietnamese:vLanguage == 1 whileHeld:whileHeld];
+}
+
+- (void)beginLanguageSwitchPreview {
+    if (![[NSUserDefaults standardUserDefaults] boolForKey:@"ShowLanguageSwitchHUD"]) {
+        return;
+    }
+    [_languagePreviewTimer invalidate];
+    _languagePreviewTimer = [NSTimer timerWithTimeInterval:0.16
+                                                  target:self selector:@selector(showLanguageSwitchPreview:)
+                                                userInfo:nil repeats:NO];
+    [NSRunLoop.mainRunLoop addTimer:_languagePreviewTimer forMode:NSRunLoopCommonModes];
+}
+
+- (void)showLanguageSwitchPreview:(NSTimer *)timer {
+    _languagePreviewTimer = nil;
+    if (vSwitchLanguageWithFn) {
+        [self showLanguageSwitchHUDWhileHeld:YES];
+    }
+}
+
+- (void)endLanguageSwitchPreview {
+    [_languagePreviewTimer invalidate];
+    _languagePreviewTimer = nil;
+    [_languageSwitchHUD dismiss];
 }
 
 - (void)onAppProfilesSelected {
@@ -558,10 +602,13 @@ extern bool convertToolDontAlertWhenCompleted;
 
 #pragma mark Reset OpenKey after mac computer awake
 -(void)receiveWakeNote: (NSNotification*)note {
-    [OpenKeyManager initEventTap];
+    [self refreshInputPermission];
 }
 
 -(void)receiveSleepNote: (NSNotification*)note {
+    [self stopPermissionRetry];
+    [self endLanguageSwitchPreview];
+    [self stopObservingPasswordFields];
     [OpenKeyManager stopEventTap];
 }
 
@@ -579,9 +626,83 @@ extern bool convertToolDontAlertWhenCompleted;
 
 -(void)applyProfilesForApplication:(NSRunningApplication *)app {
     if (app && [OpenKeyManager isInited]) {
+        if (_observedPasswordPID != app.processIdentifier) {
+            [self stopObservingPasswordFields];
+        }
         NSString *profileIdentifier = [OpenKeyManager profileIdentifierForApplication:app displayName:NULL];
         OnActiveAppChanged(profileIdentifier, app.bundleIdentifier ?: app.localizedName);
+        if (app.processIdentifier != getpid() && !_observedPasswordApplication) {
+            [self observePasswordFieldsInApplication:app.processIdentifier];
+        }
     }
+}
+
+- (void)observePasswordFieldsInApplication:(pid_t)pid {
+    _observedPasswordPID = pid;
+    _observedPasswordApplication = AXUIElementCreateApplication(pid);
+    AXUIElementSetMessagingTimeout(_observedPasswordApplication, 0.05f);
+    if (AXObserverCreate(pid, passwordFieldFocusChanged, &_passwordFieldObserver) == kAXErrorSuccess) {
+        void *context = (__bridge void *)self;
+        AXObserverAddNotification(_passwordFieldObserver, _observedPasswordApplication,
+                                  kAXFocusedUIElementChangedNotification, context);
+        AXObserverAddNotification(_passwordFieldObserver, _observedPasswordApplication,
+                                  kAXFocusedWindowChangedNotification, context);
+        CFRunLoopAddSource(CFRunLoopGetMain(), AXObserverGetRunLoopSource(_passwordFieldObserver), kCFRunLoopCommonModes);
+    }
+    [self refreshFocusedPasswordField];
+}
+
+- (void)refreshFocusedPasswordField {
+    if (!_observedPasswordApplication) {
+        return;
+    }
+    CFTypeRef focusedValue = NULL;
+    AXError focusResult = AXUIElementCopyAttributeValue(_observedPasswordApplication, kAXFocusedUIElementAttribute, &focusedValue);
+    __attribute__((objc_precise_lifetime)) id focused = CFBridgingRelease(focusedValue);
+    if (focusResult == kAXErrorCannotComplete) {
+        return;
+    }
+    AXUIElementRef passwordField = NULL;
+    if (focused && CFGetTypeID((__bridge CFTypeRef)focused) == AXUIElementGetTypeID()) {
+        AXUIElementRef element = (__bridge AXUIElementRef)focused;
+        AXUIElementSetMessagingTimeout(element, 0.05f);
+        CFTypeRef subroleValue = NULL;
+        AXError result = AXUIElementCopyAttributeValue(element, kAXSubroleAttribute, &subroleValue);
+        id subrole = CFBridgingRelease(subroleValue);
+        if (result == kAXErrorCannotComplete) {
+            return;
+        }
+        if ([subrole isEqual:(__bridge NSString *)kAXSecureTextFieldSubrole]) {
+            passwordField = element;
+        }
+    }
+
+    if (passwordField && _focusedPasswordField && CFEqual(passwordField, _focusedPasswordField)) {
+        return;
+    }
+    if (_focusedPasswordField) {
+        CFRelease(_focusedPasswordField);
+    }
+    _focusedPasswordField = passwordField ? (AXUIElementRef)CFRetain(passwordField) : NULL;
+    OnPasswordFieldChanged(passwordField != NULL);
+}
+
+- (void)stopObservingPasswordFields {
+    if (_passwordFieldObserver) {
+        CFRunLoopRemoveSource(CFRunLoopGetMain(), AXObserverGetRunLoopSource(_passwordFieldObserver), kCFRunLoopCommonModes);
+        CFRelease(_passwordFieldObserver);
+        _passwordFieldObserver = NULL;
+    }
+    if (_observedPasswordApplication) {
+        CFRelease(_observedPasswordApplication);
+        _observedPasswordApplication = NULL;
+    }
+    if (_focusedPasswordField) {
+        CFRelease(_focusedPasswordField);
+        _focusedPasswordField = NULL;
+        OnPasswordFieldChanged(NO);
+    }
+    _observedPasswordPID = 0;
 }
 
 -(void)registerSupportedNotification {

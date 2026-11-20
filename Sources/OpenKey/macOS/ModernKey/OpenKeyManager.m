@@ -8,6 +8,7 @@
 
 #import "OpenKeyManager.h"
 #import "AppDelegate.h"
+#import "MJAccessibilityUtils.h"
 #include <string.h>
 #include <sys/sysctl.h>
 
@@ -91,9 +92,8 @@ static NSString *windowsExecutableName(pid_t pid) {
 +(BOOL)initEventTap {
     if (_isInited)
         return true;
-    
-    //init modernKey
-    OpenKeyInit();
+    if (!MJAccessibilityIsEnabled())
+        return NO;
     
     // Create an event tap. We are interested in key presses.
     eventMask = ((1 << kCGEventKeyDown) |
@@ -112,15 +112,20 @@ static NSString *windowsExecutableName(pid_t pid) {
                                 NULL);
     
     if (!eventTap) {
-        
-        fprintf(stderr, "failed to create event tap\n");
         return NO;
     }
-    
-    _isInited = YES;
-    
+
     // Create a run loop source.
     runLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, eventTap, 0);
+    if (!runLoopSource) {
+        CFMachPortInvalidate(eventTap);
+        CFRelease(eventTap);
+        eventTap = NULL;
+        return NO;
+    }
+
+    OpenKeyInit();
+    _isInited = YES;
     
     // Add to the current run loop.
     CFRunLoopAddSource(CFRunLoopGetCurrent(), runLoopSource, kCFRunLoopCommonModes);
