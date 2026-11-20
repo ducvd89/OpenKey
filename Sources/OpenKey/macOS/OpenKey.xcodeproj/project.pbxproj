@@ -3,18 +3,22 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 50;
+	objectVersion = 54;
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0CDA00000000000000000002 /* Glass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CDA00000000000000000001 /* Glass.swift */; };
+		0CDA00010000000000000002 /* SettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CDA00010000000000000001 /* SettingsStore.swift */; };
+		0CDA00020000000000000002 /* ControlPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CDA00020000000000000001 /* ControlPanel.swift */; };
+		0CDA00030000000000000002 /* PanelSections.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CDA00030000000000000001 /* PanelSections.swift */; };
+		0CDA00040000000000000002 /* AppProfilesSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CDA00040000000000000001 /* AppProfilesSection.swift */; };
+		0CDA00050000000000000002 /* LanguageHUD.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CDA00050000000000000001 /* LanguageHUD.swift */; };
 		23136D92231FBD49000764E6 /* ConvertToolViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 23136D91231FBD49000764E6 /* ConvertToolViewController.mm */; };
 		232DB1E421FAED290049A0B5 /* StatusHighlighted.png in Resources */ = {isa = PBXBuildFile; fileRef = 232DB1E021FAED280049A0B5 /* StatusHighlighted.png */; };
 		232DB1E521FAED290049A0B5 /* Status.png in Resources */ = {isa = PBXBuildFile; fileRef = 232DB1E121FAED280049A0B5 /* Status.png */; };
 		232DB1E621FAED290049A0B5 /* Status@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 232DB1E221FAED280049A0B5 /* Status@2x.png */; };
 		232DB1E721FAED290049A0B5 /* StatusHighlighted@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 232DB1E321FAED280049A0B5 /* StatusHighlighted@2x.png */; };
 		232EDA5921F1B33E0085D362 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 232EDA5821F1B33E0085D362 /* AppDelegate.m */; };
-		F2D902947D6F4A3E90A154E3 /* AppProfilesWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = F2D902947D6F4A3E90A154E2 /* AppProfilesWindowController.m */; };
-		C8F1486250E94636A8BB7013 /* LanguageSwitchHUD.m in Sources */ = {isa = PBXBuildFile; fileRef = C8F1486250E94636A8BB7012 /* LanguageSwitchHUD.m */; };
 		232EDA5C21F1B33E0085D362 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 232EDA5B21F1B33E0085D362 /* ViewController.m */; };
 		232EDA5E21F1B33F0085D362 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 232EDA5D21F1B33F0085D362 /* Assets.xcassets */; };
 		232EDA6121F1B33F0085D362 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 232EDA5F21F1B33F0085D362 /* Main.storyboard */; };
@@ -61,6 +65,13 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		0CDA00000000000000000001 /* Glass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Glass.swift; sourceTree = "<group>"; };
+		0CDA00010000000000000001 /* SettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsStore.swift; sourceTree = "<group>"; };
+		0CDA00020000000000000001 /* ControlPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ControlPanel.swift; sourceTree = "<group>"; };
+		0CDA00030000000000000001 /* PanelSections.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PanelSections.swift; sourceTree = "<group>"; };
+		0CDA00040000000000000001 /* AppProfilesSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppProfilesSection.swift; sourceTree = "<group>"; };
+		0CDA00050000000000000001 /* LanguageHUD.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanguageHUD.swift; sourceTree = "<group>"; };
+		0CDA00FF0000000000000001 /* OpenKey-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "OpenKey-Bridging-Header.h"; sourceTree = "<group>"; };
 		23136D90231FBD49000764E6 /* ConvertToolViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ConvertToolViewController.h; sourceTree = "<group>"; };
 		23136D91231FBD49000764E6 /* ConvertToolViewController.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = ConvertToolViewController.mm; sourceTree = "<group>"; };
 		232DB1E021FAED280049A0B5 /* StatusHighlighted.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = StatusHighlighted.png; sourceTree = "<group>"; };
@@ -70,10 +81,6 @@
 		232EDA5421F1B33E0085D362 /* OpenKey.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = OpenKey.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		232EDA5721F1B33E0085D362 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		232EDA5821F1B33E0085D362 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
-		F2D902947D6F4A3E90A154E1 /* AppProfilesWindowController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppProfilesWindowController.h; sourceTree = "<group>"; };
-		F2D902947D6F4A3E90A154E2 /* AppProfilesWindowController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppProfilesWindowController.m; sourceTree = "<group>"; };
-		C8F1486250E94636A8BB7011 /* LanguageSwitchHUD.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LanguageSwitchHUD.h; sourceTree = "<group>"; };
-		C8F1486250E94636A8BB7012 /* LanguageSwitchHUD.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LanguageSwitchHUD.m; sourceTree = "<group>"; };
 		232EDA5A21F1B33E0085D362 /* ViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
 		232EDA5B21F1B33E0085D362 /* ViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
 		232EDA5D21F1B33F0085D362 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -160,6 +167,19 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		0CDA00FE0000000000000001 /* UI */ = {
+			isa = PBXGroup;
+			children = (
+				0CDA00000000000000000001 /* Glass.swift */,
+				0CDA00010000000000000001 /* SettingsStore.swift */,
+				0CDA00020000000000000001 /* ControlPanel.swift */,
+				0CDA00030000000000000001 /* PanelSections.swift */,
+				0CDA00040000000000000001 /* AppProfilesSection.swift */,
+				0CDA00050000000000000001 /* LanguageHUD.swift */,
+			);
+			path = UI;
+			sourceTree = "<group>";
+		};
 		232DB1DF21FAED280049A0B5 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
@@ -206,14 +226,12 @@
 			isa = PBXGroup;
 			children = (
 				232DB1DF21FAED280049A0B5 /* Resources */,
+				0CDA00FE0000000000000001 /* UI */,
+				0CDA00FF0000000000000001 /* OpenKey-Bridging-Header.h */,
 				23F512842336386200397988 /* MJAccessibilityUtils.h */,
 				23F512832336386200397988 /* MJAccessibilityUtils.m */,
 				232EDA5721F1B33E0085D362 /* AppDelegate.h */,
 				232EDA5821F1B33E0085D362 /* AppDelegate.m */,
-				F2D902947D6F4A3E90A154E1 /* AppProfilesWindowController.h */,
-				F2D902947D6F4A3E90A154E2 /* AppProfilesWindowController.m */,
-				C8F1486250E94636A8BB7011 /* LanguageSwitchHUD.h */,
-				C8F1486250E94636A8BB7012 /* LanguageSwitchHUD.m */,
 				232EDA5A21F1B33E0085D362 /* ViewController.h */,
 				232EDA5B21F1B33E0085D362 /* ViewController.m */,
 				2374A12E2216720E005B0375 /* AboutViewController.h */,
@@ -353,7 +371,8 @@
 		232EDA4C21F1B33E0085D362 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 1010;
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 2720;
 				ORGANIZATIONNAME = "Tuyen Mai";
 				TargetAttributes = {
 					232EDA5321F1B33E0085D362 = {
@@ -429,8 +448,12 @@
 				233C4A70231F937900DD7052 /* ConvertTool.cpp in Sources */,
 				23136D92231FBD49000764E6 /* ConvertToolViewController.mm in Sources */,
 				232EDA5921F1B33E0085D362 /* AppDelegate.m in Sources */,
-				F2D902947D6F4A3E90A154E3 /* AppProfilesWindowController.m in Sources */,
-				C8F1486250E94636A8BB7013 /* LanguageSwitchHUD.m in Sources */,
+				0CDA00000000000000000002 /* Glass.swift in Sources */,
+				0CDA00010000000000000002 /* SettingsStore.swift in Sources */,
+				0CDA00020000000000000002 /* ControlPanel.swift in Sources */,
+				0CDA00030000000000000002 /* PanelSections.swift in Sources */,
+				0CDA00040000000000000002 /* AppProfilesSection.swift in Sources */,
+				0CDA00050000000000000002 /* LanguageHUD.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -491,6 +514,7 @@
 				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
 				CLANG_WARN_STRICT_PROTOTYPES = YES;
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
@@ -499,9 +523,12 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_IDENTITY = "-";
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = ER3VGDY489;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -521,6 +548,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 			};
 			name = Debug;
 		};
@@ -551,6 +579,7 @@
 				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
 				CLANG_WARN_STRICT_PROTOTYPES = YES;
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
@@ -559,9 +588,12 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_IDENTITY = "-";
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = ER3VGDY489;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -574,58 +606,68 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
 			};
 			name = Release;
 		};
 		232EDA6921F1B33F0085D362 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CLANG_ENABLE_MODULES = NO;
-				CODE_SIGN_IDENTITY = "Mac Developer";
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 48;
-				DEVELOPMENT_TEAM = 8S7348QV8Q;
+				CURRENT_PROJECT_VERSION = 49;
+				DEAD_CODE_STRIPPING = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
 				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_FILE = ModernKey/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 10.10;
-				MARKETING_VERSION = 2.0.4;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 2.1.0;
 				OTHER_LDFLAGS = (
 					"-lc++\n-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.tuyenmai.openkey;
+				PRODUCT_BUNDLE_IDENTIFIER = app.cid.openkey;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
+				SWIFT_OBJC_BRIDGING_HEADER = "ModernKey/OpenKey-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
 			};
 			name = Debug;
 		};
 		232EDA6A21F1B33F0085D362 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CLANG_ENABLE_MODULES = NO;
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_IDENTITY = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 48;
-				DEVELOPMENT_TEAM = 8S7348QV8Q;
+				CURRENT_PROJECT_VERSION = 49;
+				DEAD_CODE_STRIPPING = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
 				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_FILE = ModernKey/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 10.10;
-				MARKETING_VERSION = 2.0.4;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 2.1.0;
 				OTHER_LDFLAGS = (
 					"-lc++\n-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.tuyenmai.openkey;
+				PRODUCT_BUNDLE_IDENTIFIER = app.cid.openkey;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
+				SWIFT_OBJC_BRIDGING_HEADER = "ModernKey/OpenKey-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
 			};
 			name = Release;
 		};

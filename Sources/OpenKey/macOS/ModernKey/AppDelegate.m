@@ -14,14 +14,12 @@
 #include <libproc.h>
 #include <sys/proc_info.h>
 #import "AppDelegate.h"
-#import "AppProfilesWindowController.h"
-#import "LanguageSwitchHUD.h"
 #import "ViewController.h"
 #import "OpenKeyManager.h"
 #import "MJAccessibilityUtils.h"
+#import "OpenKey-Swift.h"
 
 AppDelegate* appDelegate;
-extern ViewController* viewController;
 extern void OnTableCodeChange(void);
 extern void OnInputMethodChanged(void);
 extern void RequestNewSession(void);
@@ -78,12 +76,9 @@ static void passwordFieldFocusChanged(AXObserverRef observer, AXUIElementRef ele
 }
 
 @implementation AppDelegate {
-    NSWindowController *_mainWC;
     NSWindowController *_macroWC;
     NSWindowController *_convertWC;
-    NSWindowController *_aboutWC;
-    AppProfilesWindowController *_appProfilesWC;
-    LanguageSwitchHUD *_languageSwitchHUD;
+    OKLanguageHUD *_languageSwitchHUD;
     NSTimer *_languagePreviewTimer;
     NSTimer *_permissionRetryTimer;
     AXUIElementRef _observedPasswordApplication;
@@ -119,7 +114,7 @@ static void passwordFieldFocusChanged(AXObserverRef observer, AXUIElementRef ele
 
 -(BOOL)refreshInputPermission {
     BOOL ready = [OpenKeyManager initEventTap];
-    [viewController updateInputPermissionStatus:ready hasAccessibility:ready || MJAccessibilityIsEnabled()];
+    [OKControlPanel.shared updatePermissionWithReady:ready hasAccessibility:ready || MJAccessibilityIsEnabled()];
     if (ready) {
         [self stopPermissionRetry];
     } else if (!_permissionRetryTimer) {
@@ -347,12 +342,24 @@ static void passwordFieldFocusChanged(AXObserverRef observer, AXUIElementRef ele
 
     [self refreshActiveApp];
     [self fillData];
-    [viewController fillData];
+    [OKControlPanel.shared reload];
 }
 
 -(void)setRunOnStartup:(BOOL)val {
-    CFStringRef appId = (__bridge CFStringRef)@"com.tuyenmai.OpenKeyHelper";
-    SMLoginItemSetEnabled(appId, val);
+    SMAppService *service = SMAppService.mainAppService;
+    BOOL enabled = service.status == SMAppServiceStatusEnabled;
+    if (val == enabled) {
+        return;
+    }
+    NSError *error = nil;
+    if (val) {
+        [service registerAndReturnError:&error];
+    } else {
+        [service unregisterAndReturnError:&error];
+    }
+    if (error) {
+        NSLog(@"OpenKey: could not update login item: %@", error);
+    }
 }
 
 -(void)setGrayIcon:(BOOL)val {
@@ -458,7 +465,7 @@ static void passwordFieldFocusChanged(AXObserverRef observer, AXUIElementRef ele
         [[NSUserDefaults standardUserDefaults] setInteger:language forKey:@"InputMethod"];
     }
     [self fillData];
-    [viewController fillData];
+    [OKControlPanel.shared reload];
 }
 
 #pragma mark -StatusBar menu action
@@ -476,7 +483,7 @@ static void passwordFieldFocusChanged(AXObserverRef observer, AXUIElementRef ele
         return;
     }
     if (!_languageSwitchHUD) {
-        _languageSwitchHUD = [[LanguageSwitchHUD alloc] init];
+        _languageSwitchHUD = [[OKLanguageHUD alloc] init];
     }
     [_languageSwitchHUD showVietnamese:vLanguage == 1 whileHeld:whileHeld];
 }
@@ -506,10 +513,7 @@ static void passwordFieldFocusChanged(AXObserverRef observer, AXUIElementRef ele
 }
 
 - (void)onAppProfilesSelected {
-    if (!_appProfilesWC) {
-        _appProfilesWC = [[AppProfilesWindowController alloc] init];
-    }
-    [_appProfilesWC showWindow:self];
+    [OKControlPanel.shared showAppProfiles];
 }
 
 - (void)onInputTypeSelected:(id)sender {
@@ -521,14 +525,14 @@ static void passwordFieldFocusChanged(AXObserverRef observer, AXUIElementRef ele
     [[NSUserDefaults standardUserDefaults] setInteger:index forKey:@"InputType"];
     vInputType = index;
     [self fillData];
-    [viewController fillData];
+    [OKControlPanel.shared reload];
 }
 
 - (void)onCodeTableChanged:(int)index {
     [[NSUserDefaults standardUserDefaults] setInteger:index forKey:@"CodeTable"];
     vCodeTable = index;
     [self fillData];
-    [viewController fillData];
+    [OKControlPanel.shared reload];
     OnTableCodeChange();
 }
 
@@ -559,15 +563,7 @@ static void passwordFieldFocusChanged(AXObserverRef observer, AXUIElementRef ele
 }
 
 -(void) onControlPanelSelected {
-    if (_mainWC == nil) {
-        _mainWC = [[NSStoryboard storyboardWithName:@"Main" bundle:nil] instantiateControllerWithIdentifier:@"OpenKey"];
-    }
-    //[OpenKeyManager showDockIcon:YES];
-    if ([_mainWC.window isVisible]) {
-        return;
-    }
-    [_mainWC.window makeKeyAndOrderFront:nil];
-    [_mainWC.window setLevel:NSFloatingWindowLevel];
+    [OKControlPanel.shared show];
 }
 
 -(void) onMacroSelected {
@@ -583,21 +579,12 @@ static void passwordFieldFocusChanged(AXObserverRef observer, AXUIElementRef ele
 }
 
 -(void) onAboutSelected {
-    if (_aboutWC == nil) {
-        _aboutWC = [[NSStoryboard storyboardWithName:@"Main" bundle:nil] instantiateControllerWithIdentifier:@"AboutWindow"];
-    }
-    //[OpenKeyManager showDockIcon:YES];
-    if ([_aboutWC.window isVisible])
-        return;
-
-    [_aboutWC.window makeKeyAndOrderFront:nil];
-    [_aboutWC.window setLevel:NSFloatingWindowLevel];
+    [OKControlPanel.shared showAbout];
 }
 
 #pragma mark -Short key event
 -(void)onSwitchLanguage {
     [self onInputMethodSelected];
-    [viewController fillData];
 }
 
 #pragma mark Reset OpenKey after mac computer awake

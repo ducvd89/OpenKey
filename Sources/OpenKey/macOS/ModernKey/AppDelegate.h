@@ -9,7 +9,7 @@
 #import <Cocoa/Cocoa.h>
 #import "ViewController.h"
 
-#define OPENKEY_BUNDLE @"com.tuyenmai.openkey"
+#define OPENKEY_BUNDLE @"app.cid.openkey"
 
 extern NSString * const OpenKeyAppProfilesKey;
 
@@ -35,6 +35,9 @@ extern NSString * const OpenKeyAppProfilesKey;
 -(void)setGrayIcon:(BOOL)val;
 
 -(void)onMacroSelected;
+-(void)onConvertTool;
+-(void)onAboutSelected;
+-(void)onControlPanelSelected;
 -(void)onQuickConvert;
 -(void)setQuickConvertString;
 
