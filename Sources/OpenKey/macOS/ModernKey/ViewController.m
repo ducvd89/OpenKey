@@ -20,6 +20,7 @@ extern int vLanguage;
 extern int vCheckSpelling;
 extern int vUseModernOrthography;
 extern int vSwitchKeyStatus;
+extern int vSwitchLanguageWithFn;
 extern int vQuickTelex;
 extern int vRestoreIfWrongSpelling;
 extern int vFixRecommendBrowser;
@@ -47,6 +48,8 @@ extern int vPerformLayoutCompat;
     __weak IBOutlet NSButton *CustomSwitchShift;
     __weak IBOutlet MyTextField *CustomSwitchKey;
     __weak IBOutlet NSButton *CustomBeepSound;
+    __weak IBOutlet NSButton *SwitchLanguageWithFn;
+    __weak IBOutlet NSButton *ShowLanguageSwitchHUD;
     NSArray* tabviews, *tabbuttons;
     NSRect tabViewRect;
     NSView* tabButtonBackground;
@@ -170,6 +173,14 @@ extern int vPerformLayoutCompat;
 
 - (IBAction)onLanguageChanged:(id)sender {
     [appDelegate onInputMethodSelected];
+}
+
+- (IBAction)onSwitchLanguageWithFn:(NSButton *)sender {
+    vSwitchLanguageWithFn = (int)[self setCustomValue:sender keyToSet:@"SwitchLanguageWithFn"];
+}
+
+- (IBAction)onShowLanguageSwitchHUD:(NSButton *)sender {
+    [self setCustomValue:sender keyToSet:@"ShowLanguageSwitchHUD"];
 }
 
 - (IBAction)onAppProfilesSelected:(id)sender {
@@ -485,6 +496,9 @@ extern int vPerformLayoutCompat;
     CustomSwitchCommand.state = (vSwitchKeyStatus & 0x400) ? NSControlStateValueOn : NSControlStateValueOff;
     CustomSwitchShift.state = (vSwitchKeyStatus & 0x800) ? NSControlStateValueOn : NSControlStateValueOff;
     CustomBeepSound.state = (vSwitchKeyStatus & 0x8000) ? NSControlStateValueOn : NSControlStateValueOff;
+    SwitchLanguageWithFn.state = vSwitchLanguageWithFn ? NSControlStateValueOn : NSControlStateValueOff;
+    ShowLanguageSwitchHUD.state = [[NSUserDefaults standardUserDefaults] boolForKey:@"ShowLanguageSwitchHUD"]
+        ? NSControlStateValueOn : NSControlStateValueOff;
     [CustomSwitchKey setTextByChar:((vSwitchKeyStatus>>24) & 0xFF)];
     
 }

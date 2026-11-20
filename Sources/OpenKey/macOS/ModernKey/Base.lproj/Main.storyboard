@@ -1050,7 +1050,7 @@
                                 </connections>
                             </button>
                             <button toolTip="Chế độ gõ Tiếng Anh" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="yUA-UQ-mxx">
-                                <rect key="frame" x="295" y="1050" width="66" height="18"/>
+                                <rect key="frame" x="218" y="1050" width="66" height="18"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <buttonCell key="cell" type="radio" title="English" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="Tt6-ic-NdA">
                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -1058,6 +1058,28 @@
                                 </buttonCell>
                                 <connections>
                                     <action selector="onLanguageChanged:" target="XfG-lQ-9wD" id="5L9-e1-CX0"/>
+                                </connections>
+                            </button>
+                            <button toolTip="Nhấn rồi thả riêng phím 🌐/Fn để đổi tiếng Việt và tiếng Anh. Đặt thao tác phím 🌐/Fn của macOS thành Không làm gì." verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="fNs-38-Y4P">
+                                <rect key="frame" x="289" y="1050" width="122" height="18"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                <buttonCell key="cell" type="check" title="Đổi bằng 🌐/Fn" bezelStyle="regularSquare" imagePosition="left" inset="2" id="fNs-38-Y4Q">
+                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                    <font key="font" metaFont="system"/>
+                                </buttonCell>
+                                <connections>
+                                    <action selector="onSwitchLanguageWithFn:" target="XfG-lQ-9wD" id="fNs-38-Y4R"/>
+                                </connections>
+                            </button>
+                            <button toolTip="Hiện bảng báo Tiếng Anh/Tiếng Việt khi dùng phím tắt để đổi ngôn ngữ." verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="hUd-38-Y4P">
+                                <rect key="frame" x="415" y="1050" width="116" height="18"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                <buttonCell key="cell" type="check" title="Hiện bảng báo" bezelStyle="regularSquare" imagePosition="left" inset="2" id="hUd-38-Y4Q">
+                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                    <font key="font" metaFont="system"/>
+                                </buttonCell>
+                                <connections>
+                                    <action selector="onShowLanguageSwitchHUD:" target="XfG-lQ-9wD" id="hUd-38-Y4R"/>
                                 </connections>
                             </button>
                             <button verticalHuggingPriority="750" fixedFrame="YES" imageHugsTitle="YES" translatesAutoresizingMaskIntoConstraints="NO" id="o65-tK-iPq">
@@ -1703,6 +1725,8 @@
                         <outlet property="CustomSwitchKey" destination="F2s-m3-A6w" id="xrK-un-OiP"/>
                         <outlet property="CustomSwitchOption" destination="Mox-UL-j9u" id="iCB-jD-eQG"/>
                         <outlet property="CustomSwitchShift" destination="wh2-uV-nSn" id="uJw-Tj-F5N"/>
+                        <outlet property="SwitchLanguageWithFn" destination="fNs-38-Y4P" id="fNs-38-Y4S"/>
+                        <outlet property="ShowLanguageSwitchHUD" destination="hUd-38-Y4P" id="hUd-38-Y4S"/>
                         <outlet property="EngButton" destination="yUA-UQ-mxx" id="QKJ-tU-dsA"/>
                         <outlet property="FixChromiumBrowser" destination="efe-07-OlS" id="PMH-MH-7Ea"/>
                         <outlet property="FixRecommendBrowser" destination="BKq-hz-RRL" id="V6H-kl-20B"/>

@@ -14,6 +14,7 @@
 #include <sys/proc_info.h>
 #import "AppDelegate.h"
 #import "AppProfilesWindowController.h"
+#import "LanguageSwitchHUD.h"
 #import "ViewController.h"
 #import "OpenKeyManager.h"
 #import "MJAccessibilityUtils.h"
@@ -38,6 +39,7 @@ int vUseModernOrthography = 1;
 int vQuickTelex = 0;
 #define DEFAULT_SWITCH_STATUS 0x7A000206 //default option + z
 int vSwitchKeyStatus = DEFAULT_SWITCH_STATUS;
+int vSwitchLanguageWithFn = 0;
 int vRestoreIfWrongSpelling = 0;
 int vFixRecommendBrowser = 1;
 int vUseMacro = 1;
@@ -75,6 +77,7 @@ extern bool convertToolDontAlertWhenCompleted;
     NSWindowController *_convertWC;
     NSWindowController *_aboutWC;
     AppProfilesWindowController *_appProfilesWC;
+    LanguageSwitchHUD *_languageSwitchHUD;
     
     NSStatusItem *statusItem;
     NSMenu *theMenu;
@@ -301,6 +304,8 @@ extern bool convertToolDontAlertWhenCompleted;
     vCheckSpelling = 1; [[NSUserDefaults standardUserDefaults] setInteger:vCheckSpelling forKey:@"Spelling"];
     vCodeTable = 0; [[NSUserDefaults standardUserDefaults] setInteger:vCodeTable forKey:@"CodeTable"];
     vSwitchKeyStatus = DEFAULT_SWITCH_STATUS; [[NSUserDefaults standardUserDefaults] setInteger:vCodeTable forKey:@"SwitchKeyStatus"];
+    vSwitchLanguageWithFn = 0; [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"SwitchLanguageWithFn"];
+    [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"ShowLanguageSwitchHUD"];
     vQuickTelex = 0; [[NSUserDefaults standardUserDefaults] setInteger:vQuickTelex forKey:@"QuickTelex"];
     vUseModernOrthography = 0; [[NSUserDefaults standardUserDefaults] setInteger:vUseModernOrthography forKey:@"ModernOrthography"];
     vRestoreIfWrongSpelling = 0; [[NSUserDefaults standardUserDefaults] setInteger:vRestoreIfWrongSpelling forKey:@"RestoreIfInvalidWord"];
@@ -444,6 +449,16 @@ extern bool convertToolDontAlertWhenCompleted;
 - (void)onInputMethodSelected {
     [self setInputLanguage:!vLanguage remember:!HasActiveAppProfile()];
     OnInputMethodChanged();
+}
+
+- (void)showLanguageSwitchHUD {
+    if (![[NSUserDefaults standardUserDefaults] boolForKey:@"ShowLanguageSwitchHUD"]) {
+        return;
+    }
+    if (!_languageSwitchHUD) {
+        _languageSwitchHUD = [[LanguageSwitchHUD alloc] init];
+    }
+    [_languageSwitchHUD showVietnamese:vLanguage == 1];
 }
 
 - (void)onAppProfilesSelected {

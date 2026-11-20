@@ -46,6 +46,7 @@ extern AppDelegate* appDelegate;
 extern int vSendKeyStepByStep;
 extern int vFixChromiumBrowser;
 extern int vPerformLayoutCompat;
+extern int vSwitchLanguageWithFn;
 
 extern "C" {
     //app which must sent special empty character
@@ -80,13 +81,15 @@ extern "C" {
     int _i, _j, _k;
     Uint32 _tempChar;
     bool _hasJustUsedHotKey = false;
+    static bool fnShortcutArmed = false;
 
     vector<Byte> savedSmartSwitchKeyData; ////use for smart switch key
-    static BOOL appProfileActive;
+    static NSString *activeAppProfileIdentifier;
     
     NSString* _frontMostApp = @"UnknownApp";
     
     void OpenKeyInit() {
+        fnShortcutArmed = false;
         //load saved data
         vFreeMark = 0;//(int)[[NSUserDefaults standardUserDefaults] integerForKey:@"FreeMark"];
         LOAD_DATA(vCodeTable, CodeTable); if (vCodeTable < 0) vCodeTable = 0;
@@ -100,6 +103,7 @@ extern "C" {
         LOAD_DATA(vAutoCapsMacro, vAutoCapsMacro);
         LOAD_DATA(vSendKeyStepByStep, SendKeyStepByStep);
         LOAD_DATA(vUseSmartSwitchKey, UseSmartSwitchKey);
+        LOAD_DATA(vSwitchLanguageWithFn, SwitchLanguageWithFn);
         LOAD_DATA(vUpperCaseFirstChar, UpperCaseFirstChar);
         
         LOAD_DATA(vTempOffSpelling, vTempOffSpelling);
@@ -203,7 +207,7 @@ extern "C" {
     }
     
     BOOL HasActiveAppProfile(void) {
-        return appProfileActive;
+        return activeAppProfileIdentifier != nil;
     }
 
     static void applyAutomaticLanguage(int language, BOOL remember) {
@@ -223,12 +227,15 @@ extern "C" {
             mode = nil;
         }
 
-        // InputMethod remains the normal language while a profile is active.
-        BOOL hadProfile = appProfileActive;
-        appProfileActive = mode != nil;
         if (mode) {
-            applyAutomaticLanguage(mode.boolValue, NO);
-        } else if (hadProfile) {
+            // Keep manual changes through refreshes until focus moves to another app.
+            if (![activeAppProfileIdentifier isEqualToString:profileIdentifier]) {
+                activeAppProfileIdentifier = [profileIdentifier copy];
+                applyAutomaticLanguage(mode.boolValue, NO);
+            }
+        } else if (HasActiveAppProfile()) {
+            // InputMethod remains the normal language while a profile is active.
+            activeAppProfileIdentifier = nil;
             applyAutomaticLanguage((int)[prefs integerForKey:@"InputMethod"], NO);
         }
 
@@ -236,12 +243,12 @@ extern "C" {
             return;
         }
         _frontMostApp = smartSwitchIdentifier ?: @"UnknownApp";
-        int rememberedLanguage = appProfileActive ? (int)[prefs integerForKey:@"InputMethod"] : vLanguage;
+        int rememberedLanguage = HasActiveAppProfile() ? (int)[prefs integerForKey:@"InputMethod"] : vLanguage;
         int status = getAppInputMethodStatus(string(_frontMostApp.UTF8String), rememberedLanguage | (vCodeTable << 1));
         if (status == -1) {
             saveSmartSwitchKeyData();
         } else {
-            if (vUseSmartSwitchKey && !appProfileActive) {
+            if (vUseSmartSwitchKey && !HasActiveAppProfile()) {
                 applyAutomaticLanguage(status & 1, YES);
             }
             if (vRememberCode && (status >> 1) != vCodeTable) {
@@ -256,7 +263,7 @@ extern "C" {
             queryFrontMostApp();
             string app(_frontMostApp.UTF8String);
             int language = vLanguage;
-            if (appProfileActive) {
+            if (HasActiveAppProfile()) {
                 int normalLanguage = (int)[[NSUserDefaults standardUserDefaults] integerForKey:@"InputMethod"];
                 int previous = getAppInputMethodStatus(app, normalLanguage | (vCodeTable << 1));
                 language = previous == -1 ? normalLanguage : previous & 1;
@@ -267,7 +274,7 @@ extern "C" {
     }
     
     void OnInputMethodChanged() {
-        if (vUseSmartSwitchKey && !appProfileActive) {
+        if (vUseSmartSwitchKey && !HasActiveAppProfile()) {
             queryFrontMostApp();
             setAppInputMethodStatus(string(_frontMostApp.UTF8String), vLanguage | (vCodeTable << 1));
             saveSmartSwitchKeyData();
@@ -568,6 +575,9 @@ extern "C" {
         if (HAS_BEEP(vSwitchKeyStatus))
             NSBeep();
         [appDelegate onInputMethodSelected];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [appDelegate showLanguageSwitchHUD];
+        });
     }
     
     void handleMacro() {
@@ -628,6 +638,10 @@ extern "C" {
      * MAIN Callback.
      */
     CGEventRef OpenKeyCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef event, void *refcon) {
+        if (type == kCGEventTapDisabledByTimeout || type == kCGEventTapDisabledByUserInput) {
+            fnShortcutArmed = false;
+            return event;
+        }
         //dont handle my event
         if (CGEventGetIntegerValueField(event, kCGEventSourceStateID) == CGEventSourceGetSourceStateID(myEventSource)) {
             return event;
@@ -635,6 +649,21 @@ extern "C" {
         
         _flag = CGEventGetFlags(event);
         _keycode = (CGKeyCode)CGEventGetIntegerValueField(event, kCGKeyboardEventKeycode);
+        if (vSwitchLanguageWithFn && type == kCGEventFlagsChanged && _keycode == kVK_Function) {
+            const CGEventFlags shortcutModifiers = kCGEventFlagMaskControl | kCGEventFlagMaskAlternate |
+                                                   kCGEventFlagMaskCommand | kCGEventFlagMaskShift;
+            if (_flag & kCGEventFlagMaskSecondaryFn) {
+                fnShortcutArmed = !(_flag & shortcutModifiers);
+            } else {
+                bool shouldSwitch = fnShortcutArmed && !(_flag & shortcutModifiers);
+                fnShortcutArmed = false;
+                if (shouldSwitch) {
+                    switchLanguage();
+                }
+            }
+            return event;
+        }
+        fnShortcutArmed = false;
         
         if (type == kCGEventKeyDown && vPerformLayoutCompat) {
             // If conversion fail, use current keycode
