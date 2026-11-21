@@ -83,6 +83,9 @@ extern "C" {
     bool _hasJustUsedHotKey = false;
     static bool fnShortcutArmed = false;
     static bool fnKeyDown = false;
+    static CGEventTimestamp fnPressTimestamp;
+    static constexpr CGEventTimestamp fnQuickTapLimit = 160 * NSEC_PER_MSEC;
+    static constexpr NSTimeInterval fnPreviewDelay = 2.0;
 
     vector<Byte> savedSmartSwitchKeyData; ////use for smart switch key
     static NSString *activeAppProfileIdentifier;
@@ -691,15 +694,22 @@ extern "C" {
                     fnKeyDown = true;
                     if (!(_flag & shortcutModifiers)) {
                         fnShortcutArmed = true;
+                        fnPressTimestamp = CGEventGetTimestamp(event);
                         dispatch_async(dispatch_get_main_queue(), ^{
-                            [appDelegate beginLanguageSwitchPreview];
+                            [appDelegate beginLanguageSwitchPreviewAfter:fnPreviewDelay];
                         });
                     }
                 }
             } else {
                 fnKeyDown = false;
                 if (vSwitchLanguageWithFn && fnShortcutArmed && !(_flag & shortcutModifiers)) {
-                    switchLanguage(false);
+                    CGEventTimestamp releaseTimestamp = CGEventGetTimestamp(event);
+                    if (releaseTimestamp >= fnPressTimestamp) {
+                        CGEventTimestamp duration = releaseTimestamp - fnPressTimestamp;
+                        if (duration <= fnQuickTapLimit || duration >= fnPreviewDelay * NSEC_PER_SEC) {
+                            switchLanguage(false);
+                        }
+                    }
                 }
                 endFnShortcut();
             }

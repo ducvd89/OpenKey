@@ -18,7 +18,7 @@ extern NSString * const OpenKeyAppProfilesKey;
 -(void)setInputLanguage:(int)language remember:(BOOL)remember;
 -(void)onInputMethodSelected;
 -(void)showLanguageSwitchHUD;
--(void)beginLanguageSwitchPreview;
+-(void)beginLanguageSwitchPreviewAfter:(NSTimeInterval)delay;
 -(void)endLanguageSwitchPreview;
 -(void)onAppProfilesSelected;
 -(void)refreshActiveApp;

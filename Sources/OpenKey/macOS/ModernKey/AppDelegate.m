@@ -488,12 +488,12 @@ static void passwordFieldFocusChanged(AXObserverRef observer, AXUIElementRef ele
     [_languageSwitchHUD showVietnamese:vLanguage == 1 whileHeld:whileHeld];
 }
 
-- (void)beginLanguageSwitchPreview {
+- (void)beginLanguageSwitchPreviewAfter:(NSTimeInterval)delay {
     if (![[NSUserDefaults standardUserDefaults] boolForKey:@"ShowLanguageSwitchHUD"]) {
         return;
     }
     [_languagePreviewTimer invalidate];
-    _languagePreviewTimer = [NSTimer timerWithTimeInterval:0.16
+    _languagePreviewTimer = [NSTimer timerWithTimeInterval:delay
                                                   target:self selector:@selector(showLanguageSwitchPreview:)
                                                 userInfo:nil repeats:NO];
     [NSRunLoop.mainRunLoop addTimer:_languagePreviewTimer forMode:NSRunLoopCommonModes];

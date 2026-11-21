@@ -52,10 +52,10 @@ struct InputSection: View {
                               isOn: store.switchBit(SettingsStore.beepMask))
                 Divider()
                 SettingToggle(title: "Đổi bằng phím 🌐/Fn",
-                              caption: "Nhấn rồi thả riêng phím 🌐/Fn để đổi Tiếng Việt và Tiếng Anh. Nên đặt phím 🌐 của macOS thành “Không làm gì”.",
+                              caption: "Bấm nhanh hoặc giữ 🌐/Fn ít nhất 2 giây rồi thả để đổi Anh/Việt. Đặt phím 🌐 của macOS thành “Không làm gì”.",
                               isOn: store.switchLanguageWithFn)
                 SettingToggle(title: "Hiện bảng báo ngôn ngữ",
-                              caption: "Hiện ngôn ngữ hiện tại khi giữ 🌐/Fn, hoặc sau khi chuyển bằng phím tắt.",
+                              caption: "Hiện ngôn ngữ hiện tại sau khi giữ 🌐/Fn 2 giây, hoặc sau khi chuyển bằng phím tắt khác.",
                               isOn: store.showLanguageSwitchHUD)
             }
         }
