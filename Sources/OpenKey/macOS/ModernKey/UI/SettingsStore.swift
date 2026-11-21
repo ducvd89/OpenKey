@@ -5,6 +5,7 @@
 
 import AppKit
 import Carbon.HIToolbox
+import CoreGraphics
 import SwiftUI
 
 struct AppProfile: Identifiable, Equatable {
@@ -217,18 +218,34 @@ final class SettingsStore: ObservableObject {
         saveProfiles()
     }
 
-    /// Regular running apps that don't have a rule yet.
+    /// Include Windows apps with a normal window even if Wine hasn't marked them as regular apps.
     func runningAppsWithoutProfile() -> [(id: String, name: String)] {
         var found: [String: String] = [:]
-        for app in NSWorkspace.shared.runningApplications where app.activationPolicy == .regular {
+        let rules = Set(profiles.map(\.id))
+        let windows = CGWindowListCopyWindowInfo(.excludeDesktopElements, kCGNullWindowID)
+            as? [[String: Any]] ?? []
+        let windowOwners = Set(windows.compactMap { info -> pid_t? in
+            guard info[kCGWindowLayer as String] as? Int == 0 else { return nil }
+            return info[kCGWindowOwnerPID as String] as? pid_t
+        })
+        let applications = NSWorkspace.shared.runningApplications
+        let knownPIDs = Set(applications.map(\.processIdentifier))
+        let windowApps = windowOwners.subtracting(knownPIDs).compactMap { NSRunningApplication(processIdentifier: $0) }
+        for app in applications + windowApps {
+            let isRegular = app.activationPolicy == .regular
+            guard isRegular || windowOwners.contains(app.processIdentifier) else { continue }
             var name: NSString?
             guard let identifier = OpenKeyManager.profileIdentifier(for: app, displayName: &name),
                   !identifier.isEmpty,
                   identifier != Bundle.main.bundleIdentifier,
-                  !profiles.contains(where: { $0.id == identifier }) else { continue }
+                  !rules.contains(identifier),
+                  isRegular || identifier.hasPrefix("windows-exe:") else { continue }
             found[identifier] = (name as String?) ?? identifier
         }
         return found.map { (id: $0.key, name: $0.value) }
-            .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+            .sorted {
+                let order = $0.name.localizedStandardCompare($1.name)
+                return order == .orderedSame ? $0.id < $1.id : order == .orderedAscending
+            }
     }
 }

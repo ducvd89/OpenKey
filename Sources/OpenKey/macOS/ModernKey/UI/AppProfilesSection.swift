@@ -53,6 +53,7 @@ struct AppProfilesSection: View {
                 HStack {
                     Menu {
                         Button("Duyệt ứng dụng…", systemImage: "folder", action: browse)
+                        Button("Làm mới danh sách", systemImage: "arrow.clockwise", action: refreshRunningApps)
                         if !runningApps.isEmpty {
                             Divider()
                             Section("Ứng dụng đang chạy") {
@@ -82,6 +83,9 @@ struct AppProfilesSection: View {
         .onReceive(NSWorkspace.shared.notificationCenter.publisher(for: NSWorkspace.didTerminateApplicationNotification)) { _ in
             refreshRunningApps()
         }
+        .onReceive(NSWorkspace.shared.notificationCenter.publisher(for: NSWorkspace.didActivateApplicationNotification)) { _ in
+            refreshRunningApps()
+        }
     }
 
     private func refreshRunningApps() {
@@ -91,7 +95,7 @@ struct AppProfilesSection: View {
     private func add(_ identifier: String?, _ name: String?) {
         withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
             message = store.addProfile(identifier: identifier, name: name)
-                ? nil : "Hãy chọn một ứng dụng macOS khác."
+                ? nil : "Hãy chọn một ứng dụng khác."
         }
     }
 

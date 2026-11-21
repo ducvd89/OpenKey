@@ -91,7 +91,10 @@ static NSString *windowsExecutableName(pid_t pid) {
 +(NSString *)profileIdentifierForApplication:(NSRunningApplication *)app displayName:(NSString **)displayName {
     NSString *identifier = app.bundleIdentifier;
     NSString *name = app.localizedName;
-    if (!identifier.length) {
+    NSString *launcher = app.executableURL.lastPathComponent.lowercaseString;
+    BOOL wineHost = [launcher isEqualToString:@"wine"] || [launcher isEqualToString:@"wine64"] ||
+                    [launcher isEqualToString:@"wine-preloader"] || [launcher isEqualToString:@"wine64-preloader"];
+    if (!identifier.length || wineHost) {
         // Wine runs different Windows apps through the same native binary.
         NSString *executable = windowsExecutableName(app.processIdentifier);
         if (executable) {
