@@ -20,6 +20,7 @@ extern NSString * const OpenKeyAppProfilesKey;
 -(void)showLanguageSwitchHUD;
 -(void)beginLanguageSwitchPreviewAfter:(NSTimeInterval)delay;
 -(void)endLanguageSwitchPreview;
+-(void)finishLanguageSwitchPreview;
 -(void)onAppProfilesSelected;
 -(void)refreshActiveApp;
 

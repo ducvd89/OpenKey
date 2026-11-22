@@ -606,13 +606,17 @@ extern "C" {
         }
     }
 
-    static void endFnShortcut() {
+    static void endFnShortcut(bool animateSwitch = false) {
         if (!fnShortcutArmed) {
             return;
         }
         fnShortcutArmed = false;
         dispatch_async(dispatch_get_main_queue(), ^{
-            [appDelegate endLanguageSwitchPreview];
+            if (animateSwitch) {
+                [appDelegate finishLanguageSwitchPreview];
+            } else {
+                [appDelegate endLanguageSwitchPreview];
+            }
         });
     }
     
@@ -702,16 +706,18 @@ extern "C" {
                 }
             } else {
                 fnKeyDown = false;
+                bool switchedAfterHold = false;
                 if (vSwitchLanguageWithFn && fnShortcutArmed && !(_flag & shortcutModifiers)) {
                     CGEventTimestamp releaseTimestamp = CGEventGetTimestamp(event);
                     if (releaseTimestamp >= fnPressTimestamp) {
                         CGEventTimestamp duration = releaseTimestamp - fnPressTimestamp;
-                        if (duration <= fnQuickTapLimit || duration >= fnPreviewDelay * NSEC_PER_SEC) {
+                        switchedAfterHold = duration >= fnPreviewDelay * NSEC_PER_SEC;
+                        if (duration <= fnQuickTapLimit || switchedAfterHold) {
                             switchLanguage(false);
                         }
                     }
                 }
-                endFnShortcut();
+                endFnShortcut(switchedAfterHold);
             }
             return event;
         }

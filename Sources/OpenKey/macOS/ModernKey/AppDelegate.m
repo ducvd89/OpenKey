@@ -512,6 +512,12 @@ static void passwordFieldFocusChanged(AXObserverRef observer, AXUIElementRef ele
     [_languageSwitchHUD dismiss];
 }
 
+- (void)finishLanguageSwitchPreview {
+    [_languagePreviewTimer invalidate];
+    _languagePreviewTimer = nil;
+    [_languageSwitchHUD finishPreviewWithVietnamese:vLanguage == 1];
+}
+
 - (void)onAppProfilesSelected {
     [OKControlPanel.shared showAppProfiles];
 }

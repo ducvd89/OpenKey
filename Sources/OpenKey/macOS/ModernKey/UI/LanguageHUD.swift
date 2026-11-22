@@ -8,27 +8,29 @@ import SwiftUI
 
 final class LanguageHUDModel: ObservableObject {
     @Published var vietnamese = true
-    @Published var whileHeld = false
 }
 
 struct LanguageHUDView: View {
     @ObservedObject var model: LanguageHUDModel
-    @Namespace private var namespace
+    private let optionWidth: CGFloat = 132
+    private let optionHeight: CGFloat = 44
+    private let optionSpacing: CGFloat = 6
 
     var body: some View {
         GlassGroup(spacing: 8) {
-            Group {
-                if model.whileHeld {
-                    option(vietnamese: model.vietnamese, selected: true)
-                } else {
-                    HStack(spacing: 6) {
-                        option(vietnamese: false, selected: !model.vietnamese)
-                        option(vietnamese: true, selected: model.vietnamese)
-                    }
-                    .padding(6)
-                    .glassCapsule()
-                }
+            HStack(spacing: optionSpacing) {
+                option(vietnamese: false, selected: !model.vietnamese)
+                option(vietnamese: true, selected: model.vietnamese)
             }
+            .background(alignment: .leading) {
+                Capsule()
+                    .fill(Color(red: 0.14, green: 0.36, blue: 0.76).gradient)
+                    .frame(width: optionWidth, height: optionHeight)
+                    .offset(x: model.vietnamese ? optionWidth + optionSpacing : 0)
+                    .accessibilityHidden(true)
+            }
+            .padding(6)
+            .glassCapsule()
         }
         .padding(16)
         .fixedSize()
@@ -44,11 +46,10 @@ struct LanguageHUDView: View {
                 .font(.system(size: 16, weight: .semibold))
         }
         .foregroundStyle(selected ? Color.white : Color.primary)
-        .padding(.horizontal, 18)
-        .padding(.vertical, 11)
-        .frame(minWidth: 132)
-        .glassCapsule(tint: selected ? (vietnamese ? .red : .blue) : nil)
-        .glassID(vietnamese, in: namespace)
+        .frame(width: optionWidth, height: optionHeight)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(vietnamese ? "Tiếng Việt" : "English")
+        .accessibilityAddTraits(selected ? .isSelected : [])
     }
 }
 
@@ -58,6 +59,7 @@ final class LanguageHUD: NSObject {
     private lazy var hosting = NSHostingView(rootView: LanguageHUDView(model: model))
     private lazy var panel: NSPanel = makePanel()
     private var hideTimer: Timer?
+    private var showingPreview = false
 
     private func makePanel() -> NSPanel {
         let panel = NSPanel(contentRect: .zero,
@@ -77,16 +79,7 @@ final class LanguageHUD: NSObject {
 
     @objc(showVietnamese:whileHeld:)
     func show(vietnamese: Bool, whileHeld: Bool) {
-        let wasVisible = panel.isVisible
-        if wasVisible {
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                model.vietnamese = vietnamese
-                model.whileHeld = whileHeld
-            }
-        } else {
-            model.vietnamese = vietnamese
-            model.whileHeld = whileHeld
-        }
+        updateSelection(vietnamese: vietnamese)
         hosting.layoutSubtreeIfNeeded()
         let size = hosting.fittingSize
 
@@ -98,17 +91,41 @@ final class LanguageHUD: NSObject {
                            width: size.width, height: size.height)
         panel.setFrame(frame, display: true)
         panel.orderFrontRegardless()
-
+        showingPreview = whileHeld
         hideTimer?.invalidate()
         hideTimer = nil
         if !whileHeld {
-            let timer = Timer(timeInterval: 0.95, repeats: false) { [weak self] _ in self?.dismiss() }
-            RunLoop.main.add(timer, forMode: .common)
-            hideTimer = timer
+            scheduleDismissal(after: 0.95)
         }
     }
 
+    @objc(finishPreviewWithVietnamese:)
+    func finishPreview(vietnamese: Bool) {
+        guard showingPreview, panel.isVisible else { return }
+        showingPreview = false
+        updateSelection(vietnamese: vietnamese)
+        scheduleDismissal(after: 0.65)
+    }
+
+    private func updateSelection(vietnamese: Bool) {
+        if panel.isVisible && !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.83)) {
+                model.vietnamese = vietnamese
+            }
+        } else {
+            model.vietnamese = vietnamese
+        }
+    }
+
+    private func scheduleDismissal(after delay: TimeInterval) {
+        hideTimer?.invalidate()
+        let timer = Timer(timeInterval: delay, repeats: false) { [weak self] _ in self?.dismiss() }
+        RunLoop.main.add(timer, forMode: .common)
+        hideTimer = timer
+    }
+
     @objc func dismiss() {
+        showingPreview = false
         hideTimer?.invalidate()
         hideTimer = nil
         panel.orderOut(nil)
