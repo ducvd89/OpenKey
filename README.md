@@ -1,7 +1,9 @@
 
-# [OpenKey](http://open-key.org)
-### [Download bản mới nhất](https://github.com/tuyenvm/OpenKey/releases)
-[![GitHub release](https://img.shields.io/github/v/release/tuyenvm/OpenKey.svg)](https://github.com/tuyenvm/OpenKey/releases/latest)
+# OpenKey
+### [Download bản mới nhất](https://github.com/ducvd89/OpenKey/releases/latest)
+[![GitHub release](https://img.shields.io/github/v/release/ducvd89/OpenKey.svg)](https://github.com/ducvd89/OpenKey/releases/latest)
+
+Đây là một bản fork của [OpenKey gốc](https://github.com/tuyenvm/OpenKey) do Mai Vũ Tuyên phát triển. Bản fork tập trung vào macOS; các bản phát hành ở đây chỉ có cho macOS. Xem [bản fork này có gì khác](#bản-fork-này-có-gì-khác).
 
 ### Open source Vietnamese Input App for macOS - Bộ gõ tiếng Việt nguồn mở cho macOS.
 Bộ gõ tiếng Việt mới cho macOS, sử dụng kỹ thuật `Backspace`. Loại bỏ lỗi gạch chân khó chịu ở bộ gõ mặc định. Hoàn toàn miễn phí và là nguồn mở, luôn cập nhật và phát triển.
@@ -10,12 +12,27 @@ Bộ gõ tiếng Việt mới cho macOS, sử dụng kỹ thuật `Backspace`. L
 
 ### Lưu ý, khi sử dụng OpenKey, bạn nên tắt hẳn bộ gõ khác vì 2 chương trình bộ gõ sẽ xung đột nhau, dẫn đến thao tác không chính xác.
 
-![Giao diện](https://raw.githubusercontent.com/tuyenvm/tuyenvm.github.io/master/images/openkey-main-control.png "Main UI")
-![Giao diện](https://raw.githubusercontent.com/tuyenvm/tuyenvm.github.io/master/images/openkey-main-control-2.png "Main UI")
-![Giao diện](https://raw.githubusercontent.com/tuyenvm/tuyenvm.github.io/master/images/openkey-main-control-3.png "Main UI")
-![Menu](https://raw.githubusercontent.com/tuyenvm/tuyenvm.github.io/master/images/openkey-small-control.png "Menu bar")
+![Bộ gõ](docs/images/openkey-bo-go.png "Bộ gõ")
+![Theo ứng dụng](docs/images/openkey-theo-ung-dung.png "Theo ứng dụng")
+![Hệ thống](docs/images/openkey-he-thong.png "Hệ thống")
+
+Cửa sổ Gõ tắt và Chuyển mã vẫn như bản gốc:
+
 ![Gõ tắt](https://raw.githubusercontent.com/tuyenvm/tuyenvm.github.io/master/images/openkey-macro.png "Macro")
 ![Chuyển mã](https://raw.githubusercontent.com/tuyenvm/tuyenvm.github.io/master/images/openkey-convert-tool.png "ConvertTool")
+
+## Bản fork này có gì khác
+- **Chế độ gõ theo ứng dụng:** đặt cố định Tiếng Việt hoặc English cho từng ứng dụng, kể cả ứng dụng Windows chạy qua Wine hoặc CrossOver (nhận theo tên tệp `.exe`).
+- **Đổi chế độ bằng phím 🌐/Fn:** bấm nhanh để chuyển Anh ↔ Việt, giữ 2 giây để xem bảng báo ngôn ngữ.
+- **Ô mật khẩu:** tự chuyển sang English khi con trỏ ở trong ô mật khẩu và trả lại chế độ cũ khi rời đi.
+- **Giao diện mới:** bảng điều khiển SwiftUI, dùng Liquid Glass trên macOS 26 và nền mờ thường trên các bản macOS cũ hơn.
+- **Từ tiếng Anh khi đang gõ tiếng Việt** (từ bản 2.2.0): *Tự khôi phục phím với từ sai* trả lại cả những từ bị Telex làm hỏng như `pass`, `issue`, `data`. Tuỳ chọn *Nhận diện tiếng Anh theo ngữ cảnh* giữ nguyên những từ trùng với tiếng Việt như `this`, `list`, `tax` khi chúng đứng sau các từ như `the`, `and`, `with`.
+- **Bền hơn** (từ bản 2.2.0): tự bật lại việc bắt phím khi macOS tắt nó, bỏ qua chuỗi phím do chương trình gõ (trình gõ tắt, tự điền mật khẩu), và báo trên menu ứng dụng nào đang giữ Secure Input.
+- **Tương thích trình quản lý thanh menu** như Thaw: kéo biểu tượng trên thanh menu không còn bị kẹt.
+- **Kiểm tra bản mới** qua trang Releases của repo này. Khi có bản mới, OpenKey mở trang tải về chứ không tự cài.
+- Bundle ID là `app.cid.openkey`, khác bản gốc, nên cài đặt và quyền Trợ năng tách riêng với OpenKey gốc.
+
+Chi tiết từng bản nằm ở trang [Releases](https://github.com/ducvd89/OpenKey/releases).
 
 ## Hỗ trợ kiểu gõ
 - Telex
@@ -35,7 +52,7 @@ Bộ gõ tiếng Việt mới cho macOS, sử dụng kỹ thuật `Backspace`. L
 - **Quick Telex** (On/Off) - Gõ nhanh (cc=ch, gg=gi, kk=kh, nn=ng, qq=qu, pp=ph, tt=th).
 - **Grammar check** (On/Off) - Kiểm tra ngữ pháp.
 - **Spelling check** (On/Off) - Kiểm tra chính tả.
-- **Restore key if invalid word** (on/off) - Phục hồi phím với từ sai.
+- **Restore key if invalid word** (on/off) - Phục hồi phím với từ sai, gồm cả từ tiếng Anh bị Telex làm hỏng (Bản 2.2.0 về sau).
 - **Run on startup** (On/Off) - Chạy cùng macOS.
 - **Gray menu bar icon** (On/Off) - Biểu tượng xám trên thanh menu phù hợp với chế độ Dark mode.
 - **Switch input mode by shortcut key** - Đổi chế độ gõ bằng phím tắt tùy chọn.
@@ -57,13 +74,19 @@ Bộ gõ tiếng Việt mới cho macOS, sử dụng kỹ thuật `Backspace`. L
 - ...
 
 
-[Changelog](https://github.com/tuyenvm/OpenKey/blob/master/CHANGELOG.md)
+[Changelog của bản gốc](CHANGELOG.md) · [Các bản phát hành của bản fork](https://github.com/ducvd89/OpenKey/releases)
 
 ## Cài đặt:
+Yêu cầu macOS 13 trở lên. Bản build chạy được trên cả Apple Silicon và Intel.
+
 **Cài đặt thủ công:**  
-Tải bản OpenKey mới nhất từ [đây](https://github.com/tuyenvm/OpenKey/releases/latest), mở file `dmg` ra rồi kéo thả `OpenKey.app` vào thư mục `Application`.
+Tải bản OpenKey mới nhất từ [đây](https://github.com/ducvd89/OpenKey/releases/latest), mở file `dmg` ra rồi kéo thả `OpenKey.app` vào thư mục `Applications`.
+
+Bản build chưa được Apple notarize. Lần đầu mở, hãy chuột phải vào `OpenKey.app` rồi chọn **Mở**.
 
 **Cài bằng Homebrew:** (by nhymxu)  
+Lưu ý: Homebrew cài **bản gốc**, không phải bản fork này.
+
 Nếu chưa cài Homebrew, mở terminal, nhập:
 ```
 $ /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
@@ -84,19 +107,30 @@ $ brew upgrade --cask openkey
 ```
 
 ## Note - Lưu ý:
-OpenKey cần cấp quyền, vào *System Preferences -> Security & Privacy -> Accessibility*, kích hoạt `OpenKey.app`. **Không tắt nó khi đang dùng OpenKey**.
+OpenKey cần cấp quyền, vào *System Settings -> Privacy & Security -> Accessibility* (trên macOS cũ là *System Preferences -> Security & Privacy -> Accessibility*), kích hoạt `OpenKey.app`. **Không tắt nó khi đang dùng OpenKey**.
 ![Guide](https://raw.githubusercontent.com/tuyenvm/tuyenvm.github.io/master/images/openkey-guide.png "Accessibility").
 
+## Dành cho người phát triển
+- Cách build bản macOS: [macOS_Build.md](macOS_Build.md).
+- Bộ máy gõ dùng chung cho các nền tảng nằm ở `Sources/OpenKey/engine`. Chạy bộ kiểm thử của nó bằng:
+```
+$ Sources/OpenKey/engine/tests/run.sh
+```
+Bộ kiểm thử gồm các ca cố định, kiểm tra gõ đi gõ lại từ tiếng Việt, đếm số từ tiếng Anh bị gõ sai, và gõ phím ngẫu nhiên dưới AddressSanitizer.
+- Danh sách từ tiếng Anh trong `EnglishWords.h` dựng từ dữ liệu của dự án [VieLotus-IM](https://github.com/stevedat/VieLotus-IM) (giấy phép MIT).
+
 ## Tác giả
-- Mai Vũ Tuyên.
-- Mọi góp ý, gửi cho mình qua maivutuyen.91@gmail.com  
+- Tác giả OpenKey: Mai Vũ Tuyên.
+- Góp ý cho bản gốc gửi tới maivutuyen.91@gmail.com  
 - Fanpage: [https://www.facebook.com/OpenKeyVN](https://www.facebook.com/OpenKeyVN)
+- Bản fork này được duy trì tại [github.com/ducvd89/OpenKey](https://github.com/ducvd89/OpenKey).
 
 ## Liên kết
-- [OpenKey cho Windows, xem chi tiết tại đây](https://github.com/tuyenvm/OpenKey/tree/master/Sources/OpenKey/win32)
-- [OpenKey cho Linux (đang phát triển)](https://github.com/tuyenvm/OpenKey/tree/master/Sources/OpenKey/linux)
+- [OpenKey gốc](https://github.com/tuyenvm/OpenKey)
+- [OpenKey cho Windows, xem chi tiết tại đây](Sources/OpenKey/win32)
+- [OpenKey cho Linux (đang phát triển)](Sources/OpenKey/linux)
 ## Một điều nhỏ nhoi
-Đừng quên ủng hộ tác giả bằng cách mua ly cafe cho tác giả tỉnh ngủ nhé:  
+Đừng quên ủng hộ tác giả gốc bằng cách mua ly cafe cho tác giả tỉnh ngủ nhé:  
 [Buy me a coffee ^^](https://tuyenvm.github.io/donate.html)  
 [Redbull cũng được ^^](https://paypal.me/tuyenmai)  
 Hoặc trực tiếp qua ví momo:   
