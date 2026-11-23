@@ -26,6 +26,8 @@ extern void RequestNewSession(void);
 extern void OnActiveAppChanged(NSString *profileIdentifier, NSString *smartSwitchIdentifier);
 extern BOOL HasTemporaryInputLanguage(void);
 extern void OnPasswordFieldChanged(BOOL isPasswordField);
+extern void OnKeyboardLayoutChanged(void);
+extern void OnChromiumBrowserDetected(NSString *bundleIdentifier);
 
 NSString * const OpenKeyAppProfilesKey = @"AppLanguageProfiles";
 
@@ -41,6 +43,7 @@ int vQuickTelex = 0;
 int vSwitchKeyStatus = DEFAULT_SWITCH_STATUS;
 int vSwitchLanguageWithFn = 0;
 int vRestoreIfWrongSpelling = 0;
+extern int vEnglishContext; //owned by the engine
 int vFixRecommendBrowser = 1;
 int vUseMacro = 1;
 int vUseMacroInEnglishMode = 1;
@@ -66,7 +69,7 @@ int vFixChromiumBrowser = 0; //new on version 2.0
 extern int convertToolHotKey;
 extern bool convertToolDontAlertWhenCompleted;
 
-@interface AppDelegate ()
+@interface AppDelegate () <NSMenuDelegate>
 - (void)refreshFocusedPasswordField;
 @end
 
@@ -89,6 +92,7 @@ static void passwordFieldFocusChanged(AXObserverRef observer, AXUIElementRef ele
     NSStatusItem *statusItem;
     NSMenu *theMenu;
     
+    NSMenuItem* mnuSecureInput;
     NSMenuItem* menuInputMethod;
     
     NSMenuItem* mnuTelex;
@@ -226,6 +230,12 @@ static void passwordFieldFocusChanged(AXObserverRef observer, AXUIElementRef ele
     
     theMenu = [[NSMenu alloc] initWithTitle:@""];
     [theMenu setAutoenablesItems:NO];
+    theMenu.delegate = self;
+
+    //shown only while another app holds Secure Input, see menuNeedsUpdate:
+    mnuSecureInput = [theMenu addItemWithTitle:@"" action:nil keyEquivalent:@""];
+    mnuSecureInput.enabled = NO;
+    mnuSecureInput.hidden = YES;
     
     menuInputMethod = [theMenu addItemWithTitle:@"Bật Tiếng Việt"
                                                      action:@selector(onInputMethodSelected)
@@ -268,6 +278,16 @@ static void passwordFieldFocusChanged(AXObserverRef observer, AXUIElementRef ele
     [statusItem setMenu:theMenu];
     
     [self fillData];
+}
+
+-(void)menuNeedsUpdate:(NSMenu *)menu {
+    NSString *holder = [OpenKeyManager secureInputHolder];
+    mnuSecureInput.hidden = holder == nil;
+    if (holder.length) {
+        mnuSecureInput.title = [NSString stringWithFormat:@"⚠︎ %@ đang bật Secure Input, OpenKey không nhận được phím", holder];
+    } else if (holder) {
+        mnuSecureInput.title = @"⚠︎ Secure Input đang bật, OpenKey không nhận được phím";
+    }
 }
 
 -(void)setQuickConvertString {
@@ -320,6 +340,7 @@ static void passwordFieldFocusChanged(AXObserverRef observer, AXUIElementRef ele
     vQuickTelex = 0; [[NSUserDefaults standardUserDefaults] setInteger:vQuickTelex forKey:@"QuickTelex"];
     vUseModernOrthography = 0; [[NSUserDefaults standardUserDefaults] setInteger:vUseModernOrthography forKey:@"ModernOrthography"];
     vRestoreIfWrongSpelling = 0; [[NSUserDefaults standardUserDefaults] setInteger:vRestoreIfWrongSpelling forKey:@"RestoreIfInvalidWord"];
+    vEnglishContext = 0; [[NSUserDefaults standardUserDefaults] setInteger:vEnglishContext forKey:@"vEnglishContext"];
     vFixRecommendBrowser = 1; [[NSUserDefaults standardUserDefaults] setInteger:vFixRecommendBrowser forKey:@"FixRecommendBrowser"];
     vUseMacro = 1; [[NSUserDefaults standardUserDefaults] setInteger:vUseMacro forKey:@"UseMacro"];
     vUseMacroInEnglishMode = 0; [[NSUserDefaults standardUserDefaults] setInteger:vUseMacroInEnglishMode forKey:@"UseMacroInEnglishMode"];
@@ -609,6 +630,10 @@ static void passwordFieldFocusChanged(AXObserverRef observer, AXUIElementRef ele
     RequestNewSession();
 }
 
+-(void)keyboardLayoutChanged: (NSNotification*)note {
+    OnKeyboardLayoutChanged();
+}
+
 -(void)activeAppChanged: (NSNotification*)note {
     [self applyProfilesForApplication:note.userInfo[NSWorkspaceApplicationKey]];
 }
@@ -623,6 +648,7 @@ static void passwordFieldFocusChanged(AXObserverRef observer, AXUIElementRef ele
             [self stopObservingPasswordFields];
         }
         NSString *profileIdentifier = [OpenKeyManager profileIdentifierForApplication:app displayName:NULL];
+        OnChromiumBrowserDetected([OpenKeyManager isChromiumBrowser:app] ? app.bundleIdentifier : nil);
         OnActiveAppChanged(profileIdentifier, app.bundleIdentifier ?: app.localizedName);
         if (app.processIdentifier != getpid() && !_observedPasswordApplication) {
             [self observePasswordFieldsInApplication:app.processIdentifier];
@@ -714,5 +740,11 @@ static void passwordFieldFocusChanged(AXObserverRef observer, AXUIElementRef ele
     [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver: self
                                                            selector: @selector(activeAppChanged:)
                                                                name: NSWorkspaceDidActivateApplicationNotification object: NULL];
+
+    [[NSDistributedNotificationCenter defaultCenter] addObserver: self
+                                                        selector: @selector(keyboardLayoutChanged:)
+                                                            name: (__bridge NSString *)kTISNotifySelectedKeyboardInputSourceChanged
+                                                          object: nil
+                                              suspensionBehavior: NSNotificationSuspensionBehaviorDeliverImmediately];
 }
 @end

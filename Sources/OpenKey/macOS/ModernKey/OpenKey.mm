@@ -8,11 +8,14 @@
 #import <Cocoa/Cocoa.h>
 #import <Carbon/Carbon.h>
 #import <Foundation/Foundation.h>
+#import <time.h>
 #import "Engine.h"
 #import "AppDelegate.h"
 #import "ViewController.h"
+#import "OpenKeyManager.h"
 
-#define FRONT_APP [[NSWorkspace sharedWorkspace] frontmostApplication].bundleIdentifier
+// The frontmost application is looked up at most once per key, see frontAppForKey().
+#define FRONT_APP frontAppForKey()
 #define OTHER_CONTROL_KEY (_flag & kCGEventFlagMaskCommand) || (_flag & kCGEventFlagMaskControl) || \
                             (_flag & kCGEventFlagMaskAlternate) || (_flag & kCGEventFlagMaskSecondaryFn) || \
                             (_flag & kCGEventFlagMaskNumericPad) || (_flag & kCGEventFlagMaskHelp)
@@ -60,6 +63,16 @@ extern "C" {
                                      @"com.microsoft.edgemac.Dev", @"com.microsoft.edgemac.Beta", @"com.microsoft.Edge.Dev", @"com.microsoft.Edge"];
     NSArray* _recommendWorkaroundDisabledApp = @[@"com.apple.Spotlight"];
     
+    static NSString *keyFrontApp;
+    static BOOL keyFrontAppValid;
+    static NSString *frontAppForKey(void) {
+        if (!keyFrontAppValid) {
+            keyFrontApp = [[NSWorkspace sharedWorkspace] frontmostApplication].bundleIdentifier;
+            keyFrontAppValid = YES;
+        }
+        return keyFrontApp;
+    }
+
     CGEventSourceRef myEventSource = NULL;
     vKeyHookState* pData;
     CGEventRef eventBackSpaceDown;
@@ -92,18 +105,42 @@ extern "C" {
     static BOOL passwordFieldActive;
     static int inputLanguageBeforePasswordField;
     
+    // Asking the window server whether Spotlight is on screen is slow, and the answer can only
+    // change through something other than plain typing. Those events clear the answer.
+    static BOOL spotlightVisible;
+    static BOOL spotlightKnown;
+    static CFAbsoluteTime spotlightCheckedAt;
+    static constexpr CFTimeInterval spotlightAnswerLifetime = 2.0;
+
+    // Whether the system keyboard layout types something other than English (vOtherLanguage).
+    static BOOL layoutIsNotEnglish;
+    static BOOL layoutKnown;
+
+    // A Chromium browser recognised by its bundle layout rather than by a known bundle identifier.
+    static NSString *detectedChromiumBrowser;
+
+    // Keys that arrive faster than anyone types come from a program (text expander, password
+    // manager, automation). They are passed through untouched.
+    static uint64_t lastKeyEventTime;
+    static uint64_t lastKeyArrivalTime;
+    static int fastKeyCount;
+    static BOOL machineTyping;
+    static constexpr uint64_t machineKeyGap = 12 * NSEC_PER_MSEC;
+    static constexpr int machineKeyStreak = 6;
+
     NSString* _frontMostApp = @"UnknownApp";
     
     void OpenKeyInit() {
         fnShortcutArmed = false;
         fnKeyDown = false;
         //load saved data
-        vFreeMark = 0;//(int)[[NSUserDefaults standardUserDefaults] integerForKey:@"FreeMark"];
+        LOAD_DATA(vFreeMark, FreeMark);
         LOAD_DATA(vCodeTable, CodeTable); if (vCodeTable < 0) vCodeTable = 0;
         LOAD_DATA(vCheckSpelling, Spelling);
         LOAD_DATA(vQuickTelex, QuickTelex);
         LOAD_DATA(vUseModernOrthography, ModernOrthography);
         LOAD_DATA(vRestoreIfWrongSpelling, RestoreIfInvalidWord);
+        LOAD_DATA(vEnglishContext, vEnglishContext);
         LOAD_DATA(vFixRecommendBrowser, FixRecommendBrowser);
         LOAD_DATA(vUseMacro, UseMacro);
         LOAD_DATA(vUseMacroInEnglishMode, UseMacroInEnglishMode);
@@ -156,6 +193,7 @@ extern "C" {
     }
     
     void RequestNewSession() {
+        spotlightKnown = NO;
         //send event signal to Engine
         vKeyHandleEvent(vKeyEvent::Mouse, vKeyEventState::MouseDown, 0);
         
@@ -185,14 +223,69 @@ extern "C" {
     }
 
     BOOL isSpotlightVisible() {
+        CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+        if (spotlightKnown && now - spotlightCheckedAt < spotlightAnswerLifetime) {
+            return spotlightVisible;
+        }
+        spotlightVisible = NO;
         NSArray *windows = CFBridgingRelease(CGWindowListCopyWindowInfo(kCGWindowListOptionOnScreenOnly | kCGWindowListExcludeDesktopElements,
                                                                         kCGNullWindowID));
         for (NSDictionary *window in windows) {
             if ([[window objectForKey:(__bridge NSString *)kCGWindowOwnerName] isEqualToString:@"Spotlight"]) {
-                return true;
+                spotlightVisible = YES;
+                break;
             }
         }
-        return false;
+        spotlightKnown = YES;
+        spotlightCheckedAt = now;
+        return spotlightVisible;
+    }
+
+    static BOOL isChromiumBrowser(NSString *topApp) {
+        return topApp != nil && ([_unicodeCompoundApp containsObject:topApp] || [detectedChromiumBrowser isEqualToString:topApp]);
+    }
+
+    void OnKeyboardLayoutChanged(void) {
+        layoutKnown = NO;
+    }
+
+    static BOOL isLayoutNotEnglish(void) {
+        if (!layoutKnown) {
+            layoutIsNotEnglish = NO;
+            TISInputSourceRef source = TISCopyCurrentKeyboardInputSource();
+            if (source != NULL) {
+                CFArrayRef languages = (CFArrayRef)TISGetInputSourceProperty(source, kTISPropertyInputSourceLanguages);
+                if (languages != NULL && CFArrayGetCount(languages) > 0) {
+                    NSString *language = (__bridge NSString *)CFArrayGetValueAtIndex(languages, 0);
+                    layoutIsNotEnglish = ![language isLike:@"en"];
+                }
+                CFRelease(source);
+            }
+            layoutKnown = YES;
+        }
+        return layoutIsNotEnglish;
+    }
+
+    // True while keys come in faster than a person can type. Both clocks have to agree: after a
+    // stall, keys a person typed are delivered in one go, but their own timestamps stay apart.
+    static BOOL isMachineTyping(CGEventRef event) {
+        if (CGEventGetIntegerValueField(event, kCGKeyboardEventAutorepeat)) {
+            return machineTyping;
+        }
+        uint64_t eventTime = CGEventGetTimestamp(event);
+        uint64_t arrivalTime = clock_gettime_nsec_np(CLOCK_UPTIME_RAW);
+        BOOL isFast = eventTime != 0 && lastKeyEventTime != 0 &&
+                      eventTime >= lastKeyEventTime && eventTime - lastKeyEventTime < machineKeyGap &&
+                      arrivalTime - lastKeyArrivalTime < machineKeyGap;
+        lastKeyEventTime = eventTime;
+        lastKeyArrivalTime = arrivalTime;
+        fastKeyCount = isFast ? fastKeyCount + 1 : 0;
+        BOOL wasMachineTyping = machineTyping;
+        machineTyping = fastKeyCount >= machineKeyStreak;
+        if (machineTyping != wasMachineTyping) {
+            RequestNewSession(); //whatever was being composed no longer matches the text
+        }
+        return machineTyping;
     }
 
     BOOL shouldUseRecommendWorkaround(NSString* topApp) {
@@ -242,7 +335,13 @@ extern "C" {
         }
     }
 
+    void OnChromiumBrowserDetected(NSString *bundleIdentifier) {
+        detectedChromiumBrowser = [bundleIdentifier copy];
+    }
+
     void OnActiveAppChanged(NSString *profileIdentifier, NSString *smartSwitchIdentifier) {
+        spotlightKnown = NO;
+        layoutKnown = NO; //the layout can be remembered per document
         NSUserDefaults *prefs = [NSUserDefaults standardUserDefaults];
         BOOL isOpenKey = [profileIdentifier isEqualToString:OPENKEY_BUNDLE];
         NSDictionary *profiles = [prefs dictionaryForKey:OpenKeyAppProfilesKey];
@@ -485,6 +584,15 @@ extern "C" {
         CFRelease(eventVkeyUp);
     }
     
+    // The key being handled, as the engine encodes a typed character. Caps Lock capitalises
+    // letters only: with Caps Lock on, "," is still ",", not "<".
+    static Uint32 currentKeyData(void) {
+        Uint16 character = keyCodeToCharacter(_keycode);
+        bool isLetter = character >= 'a' && character <= 'z';
+        bool isUpper = (_flag & kCGEventFlagMaskShift) || (isLetter && (_flag & kCGEventFlagMaskAlphaShift));
+        return _keycode | (isUpper ? CAPS_MASK : 0);
+    }
+
     void SendNewCharString(const bool& dataFromMacro=false, const Uint16& offset=0) {
         _j = 0;
         _newCharSize = dataFromMacro ? pData->macroData.size() : pData->newCharCount;
@@ -549,7 +657,7 @@ extern "C" {
         if (!_willContinuteSending && (pData->code == vRestore || pData->code == vRestoreAndStartNewSession)) { //if is restore
             if (keyCodeToCharacter(_keycode) != 0) {
                 _newCharSize++;
-                _newCharString[_j++] = keyCodeToCharacter(_keycode | ((_flag & kCGEventFlagMaskAlphaShift) || (_flag & kCGEventFlagMaskShift) ? CAPS_MASK : 0));
+                _newCharString[_j++] = keyCodeToCharacter(currentKeyData());
             } else {
                 _willSendControlKey = true;
             }
@@ -681,6 +789,9 @@ extern "C" {
         if (type == kCGEventTapDisabledByTimeout || type == kCGEventTapDisabledByUserInput) {
             fnKeyDown = false;
             endFnShortcut();
+            //macOS switches a slow tap off and never back on; without this Vietnamese stays dead
+            [OpenKeyManager reenableEventTap];
+            RequestNewSession();
             return event;
         }
         //dont handle my event
@@ -688,8 +799,20 @@ extern "C" {
             return event;
         }
         
+        keyFrontAppValid = NO;
         _flag = CGEventGetFlags(event);
         _keycode = (CGKeyCode)CGEventGetIntegerValueField(event, kCGKeyboardEventKeycode);
+
+        //Spotlight opens and closes, and the layout changes, only through shortcuts and these keys
+        if (type == kCGEventFlagsChanged) {
+            spotlightKnown = NO;
+            if (_flag & (kCGEventFlagMaskControl | kCGEventFlagMaskAlternate | kCGEventFlagMaskCommand | kCGEventFlagMaskSecondaryFn)) {
+                layoutKnown = NO;
+            }
+        } else if (type == kCGEventKeyDown && ((OTHER_CONTROL_KEY) || _keycode == KEY_ESC || _keycode == KEY_RETURN ||
+                                               _keycode == KEY_ENTER || _keycode == KEY_TAB)) {
+            spotlightKnown = NO;
+        }
         if ((vSwitchLanguageWithFn || fnKeyDown) && type == kCGEventFlagsChanged && _keycode == kVK_Function) {
             const CGEventFlags shortcutModifiers = kCGEventFlagMaskControl | kCGEventFlagMaskAlternate |
                                                    kCGEventFlagMaskCommand | kCGEventFlagMaskShift;
@@ -784,6 +907,10 @@ extern "C" {
         
         _proxy = proxy;
         
+        if (type == kCGEventKeyDown && isMachineTyping(event)) {
+            return event;
+        }
+
         //If is in english mode
         if (vLanguage == 0) {
             if (passwordFieldActive) {
@@ -810,22 +937,8 @@ extern "C" {
         }
 
         //if "turn off Vietnamese when in other language" mode on
-        if(vOtherLanguage){
-            TISInputSourceRef isource = TISCopyCurrentKeyboardInputSource();
-            if ( isource != NULL )
-            {
-                CFArrayRef languages = (CFArrayRef) TISGetInputSourceProperty(isource, kTISPropertyInputSourceLanguages);
-                
-                if (CFArrayGetCount(languages) > 0) {
-                    CFStringRef langRef = (CFStringRef)CFArrayGetValueAtIndex(languages, 0);
-                    NSString *currentLanguage = (__bridge NSString *)langRef;
-                    if(![currentLanguage isLike:@"en"]){
-                        return event;
-                    }
-                    CFRelease(langRef);
-                    CFRelease(isource);
-                }
-            }
+        if (vOtherLanguage && isLayoutNotEnglish()) {
+            return event;
         }
         
         //handle keyboard
@@ -859,7 +972,7 @@ extern "C" {
                 
                 //fix autocomplete
                 if (shouldUseRecommendWorkaround(FRONT_APP) && pData->extCode != 4) {
-                    if (vFixChromiumBrowser && [_unicodeCompoundApp containsObject:FRONT_APP]) {
+                    if (vFixChromiumBrowser && isChromiumBrowser(FRONT_APP)) {
                         if (pData->backspaceCount > 0) {
                             SendShiftAndLeftArrow();
                             if (pData->backspaceCount == 1)
@@ -896,7 +1009,7 @@ extern "C" {
                         }
                     }
                     if (pData->code == vRestore || pData->code == vRestoreAndStartNewSession) {
-                        SendKeyCode(_keycode | ((_flag & kCGEventFlagMaskAlphaShift) || (_flag & kCGEventFlagMaskShift) ? CAPS_MASK : 0));
+                        SendKeyCode(currentKeyData());
                     }
                     if (pData->code == vRestoreAndStartNewSession) {
                         startNewSession();

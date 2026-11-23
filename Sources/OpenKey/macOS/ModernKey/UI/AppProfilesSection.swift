@@ -53,6 +53,7 @@ struct AppProfilesSection: View {
                 HStack {
                     Menu {
                         Button("Duyệt ứng dụng…", systemImage: "folder", action: browse)
+                        Button("Máy ảo và điều khiển từ xa đang mở", systemImage: "display", action: addRemoteControlApps)
                         Button("Làm mới danh sách", systemImage: "arrow.clockwise", action: refreshRunningApps)
                         if !runningApps.isEmpty {
                             Divider()
@@ -96,6 +97,15 @@ struct AppProfilesSection: View {
         withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
             message = store.addProfile(identifier: identifier, name: name)
                 ? nil : "Hãy chọn một ứng dụng khác."
+        }
+    }
+
+    /// The other side of a remote session or a virtual machine usually runs its own input method.
+    private func addRemoteControlApps() {
+        let count = store.addRemoteControlProfiles()
+        withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+            message = count > 0 ? "Đã thêm \(count) ứng dụng ở chế độ English."
+                                : "Không thấy máy ảo hay ứng dụng điều khiển từ xa nào đang mở."
         }
     }
 

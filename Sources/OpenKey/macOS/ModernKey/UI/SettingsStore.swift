@@ -207,6 +207,17 @@ final class SettingsStore: ObservableObject {
         return true
     }
 
+    /// Adds an English rule for every remote desktop client and virtual machine that is running.
+    /// Returns how many were added.
+    func addRemoteControlProfiles() -> Int {
+        let found = runningAppsWithoutProfile().filter { OpenKeyManager.isRemoteControlApplication($0.id) }
+        guard !found.isEmpty else { return 0 }
+        profiles += found.map { AppProfile(id: $0.id, name: $0.name, vietnamese: false) }
+        saveProfiles()
+        loadProfiles()
+        return found.count
+    }
+
     func setProfile(_ identifier: String, vietnamese: Bool) {
         guard let index = profiles.firstIndex(where: { $0.id == identifier }) else { return }
         profiles[index].vietnamese = vietnamese

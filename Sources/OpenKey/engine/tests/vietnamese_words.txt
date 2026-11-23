@@ -1,0 +1,32 @@
+# Vietnamese words that must come out exactly as written, whichever way they are typed (tone at the end
+# of the word or right after its vowel, Telex or VNI) and whether or not "restore wrong words" is on.
+# Written with the older tone placement (hòa, thủy), which is the default setting.
+tôi bạn anh chị em ông bà cha mẹ con cháu cô chú bác dì cậu mợ thím dượng chồng vợ
+một hai ba bốn năm sáu bảy tám chín mười trăm nghìn triệu tỷ nửa rưỡi vài nhiều ít
+là và của có không được cho với này đó kia đây đấy ấy nào gì ai sao đâu bao nhiêu
+đã đang sẽ vừa mới từng chưa rồi xong hết còn vẫn cũng lại nữa thôi nhé nhỉ ạ ừ
+người việc nhà nước đường phố trường lớp thầy trò bạn bè công ty văn phòng máy tính
+điện thoại bàn phím chuột màn hình mạng phần mềm ứng dụng chương trình dữ liệu
+tiếng việt nam hà nội sài gòn huế đà nẵng cần thơ hải phòng quảng ninh nghệ an
+ăn uống ngủ nghỉ chơi học làm viết đọc nghe nói nhìn thấy biết hiểu nghĩ muốn thích
+yêu thương ghét giận buồn vui mừng sợ lo lắng mệt khỏe ốm đau khổ sướng
+đẹp xấu tốt tồi lớn nhỏ cao thấp dài ngắn rộng hẹp nặng nhẹ nhanh chậm sớm muộn
+nóng lạnh ấm mát khô ướt sạch bẩn cũ mới trẻ già giàu nghèo khó dễ đúng sai
+trên dưới trong ngoài trước sau giữa bên cạnh gần xa đầu cuối quanh khắp
+hôm nay ngày mai hôm qua tuần tháng năm giờ phút giây sáng trưa chiều tối đêm khuya
+xuân hạ thu đông mưa nắng gió bão sương tuyết trời đất biển sông núi rừng ruộng vườn
+cơm phở bún bánh mì thịt cá rau quả trứng sữa đường muối tiêu ớt tỏi hành
+nguyễn trần lê phạm hoàng huỳnh phan vũ võ đặng bùi đỗ hồ ngô dương lý
+quyết định quyền quốc quê quen quên quý quả quà quạt quần quét quỳnh quẹo
+giá giờ giữ giúp giỏi giống giường giấy giận giảm gìn giặt giàn giếng
+nghĩa nghiêng nghiệp ngoại ngoan nguồn nguyện nguyệt nghỉ ngủ ngờ ngọt ngược
+khuya khuyên khuỷu khoảng khoanh khóa khỏi khuôn khác khách khẩu khổng
+thuyền thuế thuốc thuộc thương thưởng thường thước thức thật thậm thích
+truyền truyện trước trường trưởng trượt trống trồng trông trăng trắng trứng
+hòa hóa họa thỏa xóa tòa đóa lòa nhòa khỏe xòe hòe lóe tùy thủy lũy ủy thúy túy
+uống uể oải oan oán hoãn hoạt xoáy khoái ngoáy quẩy khuấy
+ươm ước ướp ương ưỡn ửng ứng ưa ứa ừa
+chuyện chuyển chuyến chuyên tuyệt tuyết duyệt luyện huyện xuyên khuyết
+điều nhiều kiểu hiểu triều siêu thiếu yếu yêu yểu yến
+mười lười cười tươi đười rượi rượu hươu bướu khướu
+ngoằn ngoèo khúc khuỷu loằng ngoằng quằn quại

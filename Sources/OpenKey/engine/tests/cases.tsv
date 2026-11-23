@@ -1,0 +1,148 @@
+# options <TAB> keys <TAB> what the screen must show
+# Options, comma separated: restore, context (restore + English context), modern, nospell, vni, simple1, simple2,
+# quick, free, zfwj, quickstart, quickend, macro, autocaps, upper. "-" for the defaults.
+# Special keys: ⌫ backspace, ↵ enter, ⇥ tab, ⎋ escape, ← left arrow, ¤ mouse click.
+
+# Telex basics
+-	toans 	toán 
+-	tieengs 	tiếng 
+-	truowngf 	trường 
+-	dduowcj 	được 
+-	nguoiwf 	người 
+-	khuyur 	khuỷu 
+-	nguyeenx 	nguyễn 
+-	quyeets 	quyết 
+-	gias 	giá 
+-	quas 	quá 
+-	cuar 	của 
+-	giuwax 	giữa 
+-	tosan 	toán 
+-	hoanf 	hoàn 
+-	hoaf 	hòa 
+modern	hoaf 	hoà 
+-	thuyr 	thủy 
+modern	thuyr 	thuỷ 
+free	tosan 	tóan 
+-	Vieejt Nam 	Việt Nam 
+-	DDAAY 	ĐÂY 
+
+# Typing a mark key twice takes the mark off and leaves the letter
+-	toanss 	toans 
+-	aaa 	aa 
+-	ddd 	dd 
+-	ww 	w 
+-	toansz 	toan 
+
+# Deleting a letter moves the mark back where it belongs
+-	tuyfa⌫ 	tùy 
+
+# Stop consonants only take sắc and nặng
+-	tapf 	tapf 
+-	hopx 	hopx 
+-	hocf 	hocf 
+-	sachr 	sachr 
+-	matf 	matf 
+-	tieeps 	tiếp 
+-	ddepj 	đẹp 
+-	hopj 	họp 
+-	cacs 	các 
+-	sachs 	sách 
+
+# Restore off: Telex as it always was
+-	pass 	pas 
+-	posts 	pots 
+-	data 	dât 
+-	this 	thí 
+
+# Restore on: words Telex breaks come back as typed
+restore	pass 	pass 
+restore	passs 	pass 
+restore	issue 	issue 
+restore	error 	error 
+restore	office 	office 
+restore	message 	message 
+restore	address 	address 
+restore	Pass 	Pass 
+restore	ISSUE 	ISSUE 
+restore	posts 	posts 
+restore	cases 	cases 
+restore	persons 	persons 
+restore	versions 	versions 
+restore	career 	career 
+restore	data 	data 
+restore	more 	more 
+restore	keep 	keep 
+restore	law 	law 
+restore	pass,	pass,
+restore	issue.	issue.
+restore	error!	error!
+restore	(data)	(data)
+restore	www.	www.
+
+# ...but a doubled letter stays the way to type the shorter, commoner word
+restore	off 	of 
+restore	ass 	as 
+
+# ...and real Vietnamese is never touched
+restore	this 	thí 
+restore	list 	lít 
+restore	tax 	tã 
+restore	of 	ò 
+restore	theme 	thêm 
+
+# English context: after an English function word, words that are both English and Vietnamese stay English
+context	the list 	the list 
+context	the this 	the this 
+context	does this 	does this 
+context	you have been 	you have been 
+context	what is the tax 	what is the tax 
+context	is 	í 
+context	list 	lít 
+context	deadline car 	deadline cả 
+context	the tooi list 	the tôi lít 
+context	the anh list 	the anh lít 
+context	the sex 	the sẽ 
+context	the↵list 	the↵lít 
+context	the¤list 	thelít 
+
+# Going back into a restored word switches restoring off for it
+context	the list ⌫⌫⌫ts 	the lít 
+restore	toans a⌫⌫k 	toánk 
+
+# Code right after "$", "=", "\" and "`" is typed as is, and so is a unit after a number
+-	$os 	$os 
+-	$os/as 	$os/as 
+-	a=as 	a=as 
+-	`is` 	`is` 
+-	C:\os 	C:\os 
+-	100w 	100w 
+-	w 	ư 
+-	3giowf 	3giờ 
+
+# "_", "-" and "/" are not treated as code, Vietnamese uses them too
+-	baos_caos 	báo_cáo 
+-	--Heets-- 	--Hết-- 
+-	anh/chij 	anh/chị 
+-	km /giowf 	km /giờ 
+
+# Macros look at the whole token, so a name inside an address is left alone
+macro	btw 	by the way 
+macro	vn 	Việt Nam 
+macro	abc.vn 	abc.vn 
+autocaps	Btw 	By the way 
+
+# VNI
+vni	toan1 	toán 
+vni	d9uoc75 	được 
+vni	tap2 	tap2 
+vni	a7 	a7 
+
+# Quick Telex keeps the capital of the first letter
+quick	cca 	cha 
+quick	Cca 	Cha 
+
+# Rare key orders that used to type a broken character or eat the one before the word
+-	asaa 	áa 
+-	abc ijw	abc iự
+-	$os⌫⌫as 	$as 
+-	$⌫as 	á 

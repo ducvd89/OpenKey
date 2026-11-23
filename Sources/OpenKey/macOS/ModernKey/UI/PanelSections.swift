@@ -141,6 +141,7 @@ struct SpellingSection: View {
 
     var body: some View {
         let spelling = store.flag("Spelling") { vCheckSpelling = $0 } after: { _ in OnSpellCheckingChanged() }
+        let restore = store.flag("RestoreIfInvalidWord") { vRestoreIfWrongSpelling = $0 }
         VStack(spacing: 16) {
             GlassCard(title: "Đặt dấu", systemImage: "textformat") {
                 SettingToggle(title: "Cho phép bỏ dấu tự do", isOn: store.flag("FreeMark") { vFreeMark = $0 })
@@ -154,8 +155,13 @@ struct SpellingSection: View {
                               isOn: spelling)
                 Group {
                     SettingToggle(title: "Tự khôi phục phím với từ sai",
-                                  caption: "Từ không hợp lệ sẽ được trả lại đúng các phím đã gõ.",
-                                  isOn: store.flag("RestoreIfInvalidWord") { vRestoreIfWrongSpelling = $0 })
+                                  caption: "Từ không hợp lệ và từ tiếng Anh bị Telex làm hỏng (pass, issue, data) được trả lại đúng các phím đã gõ.",
+                                  isOn: restore)
+                    SettingToggle(title: "Nhận diện tiếng Anh theo ngữ cảnh",
+                                  caption: "Sau các từ như the, and, with… giữ nguyên cả những từ trùng với tiếng Việt (this, list, tax). Lùi lại vào từ để gõ dấu như cũ.",
+                                  isOn: store.flag("vEnglishContext") { vEnglishContext = $0 })
+                        .padding(.leading, 16)
+                        .disabled(!restore.wrappedValue)
                     SettingToggle(title: "Cho phép “z w j f” làm phụ âm",
                                   isOn: store.flag("vAllowConsonantZFWJ") { vAllowConsonantZFWJ = $0 })
                     SettingToggle(title: "Tạm tắt chính tả bằng phím ⌃",
@@ -255,6 +261,7 @@ struct SystemSection: View {
                               caption: "Tránh lặp chữ ở thanh địa chỉ và ô có gợi ý.",
                               isOn: fixRecommend)
                 SettingToggle(title: "Sửa lỗi trên Chromium (beta)",
+                              caption: "Chrome, Edge, Brave và các trình duyệt nhân Chromium khác.",
                               isOn: store.flag("vFixChromiumBrowser") { vFixChromiumBrowser = $0 })
                     .padding(.leading, 16)
                     .disabled(!fixRecommend.wrappedValue)

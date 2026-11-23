@@ -18,6 +18,7 @@ extern int vSwitchKeyStatus;
 extern int vSwitchLanguageWithFn;
 extern int vQuickTelex;
 extern int vRestoreIfWrongSpelling;
+extern int vEnglishContext;
 extern int vFixRecommendBrowser;
 extern int vUseMacro;
 extern int vUseMacroInEnglishMode;

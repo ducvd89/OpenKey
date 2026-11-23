@@ -188,6 +188,14 @@ extern int vOtherLanguage;
 extern int vTempOffOpenKey;
 
 /**
+ * 0: No; 1: Yes
+ * Work together with vRestoreIfWrongSpelling: after English words, also restore the keys of a word
+ * that is both English and a real Vietnamese syllable ("this" / "thí").
+ * Defined by the engine itself, the application only sets it.
+ */
+extern int vEnglishContext;
+
+/**
  * Call this function first to receive data pointer
  */
 void* vKeyInit();
@@ -235,6 +243,11 @@ void vSetCheckSpelling();
  * temporarily turn off OpenKey engine
  */
 void vTempOffEngine(const bool& off=true);
+
+/**
+ * For tests: the word the engine is composing. Returns false while that word is not at the caret.
+ */
+bool vDebugTypingWord(vector<Uint32>& outWord);
 
 /**
  * some utils function

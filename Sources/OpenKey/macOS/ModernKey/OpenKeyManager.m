@@ -6,6 +6,7 @@
 //  Copyright © 2019 Tuyen Mai. All rights reserved.
 //
 
+#import <Carbon/Carbon.h>
 #import "OpenKeyManager.h"
 #import "AppDelegate.h"
 #import "MJAccessibilityUtils.h"
@@ -190,6 +191,83 @@ static NSString *windowsExecutableName(pid_t pid) {
         _isInited = false;
     }
     return YES;
+}
+
++(void)reenableEventTap {
+    if (eventTap && !CGEventTapIsEnabled(eventTap)) {
+        CGEventTapEnable(eventTap, true);
+    }
+}
+
++(NSString *)secureInputHolder {
+    if (!IsSecureEventInputEnabled()) {
+        return nil;
+    }
+    NSDictionary *session = CFBridgingRelease(CGSessionCopyCurrentDictionary());
+    NSNumber *pid = session[@"kCGSSessionSecureInputPID"];
+    if (![pid isKindOfClass:[NSNumber class]]) {
+        return @"";
+    }
+    NSRunningApplication *app = [NSRunningApplication runningApplicationWithProcessIdentifier:pid.intValue];
+    return app.localizedName ?: app.bundleIdentifier ?: @"";
+}
+
++(BOOL)isChromiumBrowser:(NSRunningApplication *)app {
+    static NSMutableDictionary<NSString *, NSNumber *> *known;
+    NSString *identifier = app.bundleIdentifier;
+    NSURL *bundleURL = app.bundleURL;
+    if (!identifier.length || !bundleURL || [identifier hasPrefix:@"com.apple."]) {
+        return NO;
+    }
+    NSNumber *answer = known[identifier];
+    if (answer) {
+        return answer.boolValue;
+    }
+    if (!known) {
+        known = [NSMutableDictionary dictionary];
+    }
+
+    // Chrome, Edge, Brave, Arc, Vivaldi and the like keep their renderer inside
+    // "<Name> Framework.framework/Helpers". Electron and CEF apps keep it elsewhere, and they are
+    // not wanted here: their text fields are not address bars.
+    BOOL found = NO;
+    NSFileManager *files = [NSFileManager defaultManager];
+    NSString *frameworks = [bundleURL.path stringByAppendingPathComponent:@"Contents/Frameworks"];
+    for (NSString *framework in [files contentsOfDirectoryAtPath:frameworks error:nil]) {
+        if (![framework hasSuffix:@" Framework.framework"]) {
+            continue;
+        }
+        NSString *helpers = [[frameworks stringByAppendingPathComponent:framework] stringByAppendingPathComponent:@"Versions/Current/Helpers"];
+        for (NSString *helper in [files contentsOfDirectoryAtPath:helpers error:nil]) {
+            if ([helper hasSuffix:@"Helper (Renderer).app"]) {
+                found = YES;
+                break;
+            }
+        }
+        if (found) {
+            break;
+        }
+    }
+    known[identifier] = @(found);
+    return found;
+}
+
++(BOOL)isRemoteControlApplication:(NSString *)identifier {
+    static NSArray<NSString *> *vendors;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        vendors = @[@"com.microsoft.rdc", @"apple.remotedesktop", @"apple.screensharing", @"teamviewer", @"anydesk",
+                    @"parsec", @"moonlight", @"nomachine", @"realvnc", @"rustdesk", @"splashtop", @"citrix",
+                    @"jump.mac.viewer", @"jumpdesktop", @"sunlogin", @"vmware", @"parallels", @"utmapp",
+                    @"virtualbox"];
+    });
+    NSString *lowercase = identifier.lowercaseString;
+    for (NSString *vendor in vendors) {
+        if ([lowercase containsString:vendor]) {
+            return YES;
+        }
+    }
+    return NO;
 }
 
 +(NSArray*)getTableCodes {
